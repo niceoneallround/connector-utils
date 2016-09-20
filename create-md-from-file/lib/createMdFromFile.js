@@ -205,9 +205,11 @@ function createResources(serviceCtx, resources, callback) {
     serviceCtx.logger.logJSON('warn', { serviceType: serviceCtx.name,
                       action: 'From-File-CreateMD-Read-Metadata-File-NO-RESOURCE-nodes-will-CONTINUE', }, loggingMD);
     return callback(null, results);
+  } else {
+    serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'From-File-Create-Resoures-Need-Create',
+                            domainName: serviceCtx.config.DOMAIN_NAME,
+                            metadata: resources, }, loggingMD);
   }
-
-  console.log(JSON.stringify(resources, null, 2));
 
   let processOne = function (item, nextCB) {
     createOneMetadata(serviceCtx, item, function (err, md) {
