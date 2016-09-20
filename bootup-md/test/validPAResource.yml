@@ -1,0 +1,10 @@
+version: 1
+resources:
+  - id: in-bound-pa
+    type: PrivacyAlgorithm
+    privacy_step:
+      - id: in-bound-pa-ps
+        type: PrivacyStep
+        privacy_action:
+          - id: in-bound-pa-ps
+            type: PrivacyAction

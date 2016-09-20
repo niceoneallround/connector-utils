@@ -15,30 +15,30 @@ version: 1
 account:
   name:
 vocab:
-  id:
+  - id:
     <type specific props>
-  id:
+  - id:
 resources:
-  id:
-   type:
-   <type specific properties>
-  id:
+  - id:
+    type:
+    <type specific properties>
+  - id:
     type:
 resource_credentials:
-  id:
+  - id:
     type:
 
 Example resources
 
 resources:
-  id: abc.com
+  - id: abc.com
     type: organization
-  id: reference_source_1
+  - id: reference_source_1
     type: reference source
     provision_base_url:
-  id: pa1 - supply the #value auto generates the rest
+  - id: pa1 - supply the #value auto generates the rest
     type: privacy_algorithm
     privacy_steps:
-      id: 1 - supply #value auto generates rest
+      - id: 1 - supply #value auto generates rest
         privacy_actions:
-          id: supply #value auto generates the rest
+          - id: supply #value auto generates the rest
