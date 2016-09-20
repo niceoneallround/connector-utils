@@ -44,8 +44,6 @@ function execute(serviceCtx, props, callback) {
     return callback(e);
   }
 
-  assert(md.account, util.format('Metadata file MUST have an account node'));
-
   createAccount(serviceCtx, md.account, function (err, account) {
     if (err) {
       return callback(err);
@@ -63,8 +61,14 @@ function execute(serviceCtx, props, callback) {
 function createAccount(serviceCtx, account, callback) {
   'use strict';
   assert(serviceCtx, 'serviceCtx param is missing');
-  assert(account, 'account param is missing');
   assert(callback, 'callback param is missing');
+
+  if (!account) {
+    serviceCtx.logger.logJSON('warn', { serviceType: serviceCtx.name,
+                      action: 'Bootup-CreateMD-Read-Metadata-File-NO-ACCOUNT-node-will-CONTINUE', }, loggingMD);
+    return callback(null, []);
+  }
+
   assert(account.name, util.format('Account.name is missing: %j', account));
   assert(account.data_model_id, util.format('Account.data_model_id is missing: %j', account));
 
