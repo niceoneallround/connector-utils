@@ -2,7 +2,7 @@
 
 const apigwRequestWrapper = require('node-utils/apigwRequestWrapper/lib/apigwRequestWrapper');
 const assert = require('assert');
-const bootupMD = require('../lib/bootupMD');
+const createMdFromFile = require('../lib/createMdFromFile');
 const JWTClaims = require('jwt-utils/lib/jwtUtils').claims;
 const JWTUtils = require('jwt-utils/lib/jwtUtils').jwtUtils;
 const HttpStatus = require('http-status');
@@ -48,7 +48,7 @@ describe('test bootupMD for Privacy Algorithm Resource', function () {
             ];
           });
 
-      bootupMD.execute(serviceCtx, {}, function (err, results) {
+      createMdFromFile.execute(serviceCtx, {}, function (err, results) {
         assert(!err, util.format('did not expect err:%j', err));
         fetchScope.isDone();
         console.log(results);
@@ -93,7 +93,7 @@ describe('test bootupMD for Privacy Algorithm Resource', function () {
               return JWTUtils.signData({ '@id': fakeId2 }, serviceCtx.config.crypto.jwt);
             });
 
-      bootupMD.execute(serviceCtx, {}, function (err, results) {
+      createMdFromFile.execute(serviceCtx, {}, function (err, results) {
         assert(!err, util.format('create got unexpected expect err:%s', err));
         fetchScope.isDone();
         postScope.isDone();
