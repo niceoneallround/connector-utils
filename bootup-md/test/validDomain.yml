@@ -1,0 +1,4 @@
+version: 1
+account:
+  name: abc.com
+  data_model_id: http://abc.schema.webshield.io

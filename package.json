@@ -1,0 +1,41 @@
+{
+  "name": "connector-utils",
+  "version": "1.0.0",
+  "description": "Utis used by all connectors",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/niceoneallround/connector-utils.git"
+  },
+  "keywords": [
+    "test"
+  ],
+  "author": "rich@webshield.io",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/niceoneallround/connector-utils/issues"
+  },
+  "homepage": "https://github.com/niceoneallround/connector-utils#readme",
+  "devDependencies": {
+    "data-models": "git://github.com/niceoneallround/data-models.git",
+    "gulp": "^3.9.1",
+    "gulp-buddy.js": "^1.0.0",
+    "gulp-istanbul": "^1.0.0",
+    "gulp-jscs": "^4.0.0",
+    "gulp-jshint": "^2.0.1",
+    "gulp-mocha": "^3.0.1",
+    "gulp-nsp": "^2.4.2",
+    "jshint": "^2.9.2",
+    "jshint-stylish": "^2.2.0",
+    "jwt-utils": "git://github.com/niceoneallround/jwt-utils.git",
+    "nock": "^8.0.0",
+    "node-utils": "git://github.com/niceoneallround/node-utils.git"
+  },
+  "dependencies": {
+    "http-status": "^0.2.3",
+    "js-yaml": "^3.6.1"
+  }
+}
