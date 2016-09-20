@@ -94,7 +94,7 @@ describe('test bootupMD for Privacy Algorithm Resource', function () {
             });
 
       createMdFromFile.execute(serviceCtx, {}, function (err, results) {
-        assert(!err, util.format('create got unexpected expect err:%s', err));
+        assert(!err, util.format('create got unexpected expect err:%j', err));
         fetchScope.isDone();
         postScope.isDone();
         results.length.should.be.equal(1);

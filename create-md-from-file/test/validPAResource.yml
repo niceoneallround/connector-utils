@@ -2,9 +2,11 @@ version: 1
 resources:
   - id: in-bound-pa
     type: PrivacyAlgorithm
+    description: A valid PA so tests will run
     privacy_step:
       - id: in-bound-pa-ps
-        type: PrivacyStep
+        node_type: connector
         privacy_action:
           - id: in-bound-pa-ps
-            type: PrivacyAction
+            action: obfuscate
+            node_type: external

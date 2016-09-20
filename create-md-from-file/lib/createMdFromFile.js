@@ -60,6 +60,10 @@ function execute(serviceCtx, props, callback) {
 
     // create resources
     createResources(serviceCtx, md.resources, function (err, resources) {
+      if (err) {
+        return callback(err, null);
+      }
+
       results = results.concat(resources);
       return callback(null, results);
     });
@@ -317,6 +321,17 @@ function createOneMetadata(serviceCtx, md, callback) {
     //
 
     let mdNode = MDUtils.YAML2Metadata(md, { hostname: serviceCtx.config.DOMAIN_NAME }); // ok to use domain
+
+    if (PNDataModelError.isError(mdNode)) {
+      serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
+                            action: 'From-File-Create-One-Metadata-Created-JSON-LD-Node-YAML-FILE-INVALID',
+                            domainName: serviceCtx.config.DOMAIN_NAME,
+                            mdId: mdId,
+                            error: mdNode, }, loggingMD);
+      return callback(mdNode, null);
+    }
+
+    // all ok :)
 
     serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
                           action: 'From-File-Create-One-Metadata-Created-JSON-LD-Node',
