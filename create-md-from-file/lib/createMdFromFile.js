@@ -14,7 +14,7 @@ const yaml = require('js-yaml');
 
 var loggingMD = {
     ServiceType: 'connector-utils',
-    FileName: 'bootupMD.js', };
+    FileName: 'createMdFromFile.js', };
 
 function readFile(mdFile) {
   'use strict';
