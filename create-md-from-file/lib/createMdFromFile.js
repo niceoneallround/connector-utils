@@ -320,7 +320,9 @@ function createOneMetadata(serviceCtx, md, callback) {
     // NEED TO CREATE METADATA AS DOES NOT EXIST
     //
 
-    let mdNode = MDUtils.YAML2Metadata(md, { hostname: serviceCtx.config.DOMAIN_NAME }); // ok to use domain
+    let mdNode = MDUtils.YAML2Metadata(md, {
+                  hostname: serviceCtx.config.DOMAIN_NAME,  // ok to use domain
+                  domainName: serviceCtx.config.DOMAIN_NAME, });
 
     if (PNDataModelError.isError(mdNode)) {
       serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
