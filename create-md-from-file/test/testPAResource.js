@@ -11,17 +11,17 @@ const PNDataModel = require('data-models/lib/PNDataModel');
 const testUtils = require('node-utils/testing-utils/lib/utils');
 const util = require('util');
 
-describe('test bootupMD for Privacy Algorithm Resource', function () {
+describe('test create metadata from file for Privacy Algorithm Resource', function () {
   'use strict';
 
-  var serviceCtx;
+  let serviceCtx;
+  let file = __dirname + '/' + 'validPAResource.yml';
 
   before(function (done) {
     testUtils.createDummyServiceCtx({ name: 'dummyName' }, function (ctx) {
       serviceCtx = ctx;
       serviceCtx.config = testUtils.getTestServiceConfig({});
       serviceCtx.config.DOMAIN_NAME = 'abc.com';
-      serviceCtx.config.METADATA_FILE = __dirname + '/' + 'validPAResource.yml';
       serviceCtx.config.API_GATEWAY_URL = 'http://patest.fake.webshield.io';
       done();
     });
@@ -48,7 +48,7 @@ describe('test bootupMD for Privacy Algorithm Resource', function () {
             ];
           });
 
-      createMdFromFile.execute(serviceCtx, {}, function (err, results) {
+      createMdFromFile.execute(serviceCtx, { file: file }, function (err, results) {
         assert(!err, util.format('did not expect err:%j', err));
         fetchScope.isDone();
         console.log(results);
@@ -93,7 +93,7 @@ describe('test bootupMD for Privacy Algorithm Resource', function () {
               return JWTUtils.signData({ '@id': fakeId2 }, serviceCtx.config.crypto.jwt);
             });
 
-      createMdFromFile.execute(serviceCtx, {}, function (err, results) {
+      createMdFromFile.execute(serviceCtx, { file: file }, function (err, results) {
         assert(!err, util.format('create got unexpected expect err:%j', err));
         fetchScope.isDone();
         postScope.isDone();

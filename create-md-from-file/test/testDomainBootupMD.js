@@ -8,16 +8,16 @@ const nock = require('nock');
 const testUtils = require('node-utils/testing-utils/lib/utils');
 const util = require('util');
 
-describe('test bootupMD for domain/Account', function () {
+describe('test create metadata from file for domain', function () {
   'use strict';
 
-  var serviceCtx;
+  let serviceCtx;
+  let file = __dirname + '/' + 'validDomain.yml';
 
   before(function (done) {
     testUtils.createDummyServiceCtx({ name: 'dummyName' }, function (ctx) {
       serviceCtx = ctx;
       serviceCtx.config = testUtils.getTestServiceConfig({});
-      serviceCtx.config.METADATA_FILE = __dirname + '/' + 'validDomain.yml';
       serviceCtx.config.API_GATEWAY_URL = 'http://fake.webshield.io';
       done();
     });
@@ -40,7 +40,7 @@ describe('test bootupMD for domain/Account', function () {
             ];
           });
 
-      createMdFromFile.execute(serviceCtx, {}, function (err, results) {
+      createMdFromFile.execute(serviceCtx, { file: file }, function (err, results) {
         assert(!err, util.format('did not expect err:%j', err));
         fetchScope.isDone();
         results.length.should.be.equal(1);
@@ -78,7 +78,7 @@ describe('test bootupMD for domain/Account', function () {
               return JWTUtils.signData({ '@id': fakeId2 }, serviceCtx.config.crypto.jwt);
             });
 
-      createMdFromFile.execute(serviceCtx, {}, function (err, results) {
+      createMdFromFile.execute(serviceCtx, { file: file }, function (err, results) {
         assert(!err, util.format('create got unexpected expect err:%s', err));
         fetchScope.isDone();
         postScope.isDone();

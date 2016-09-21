@@ -21,12 +21,13 @@ function readFile(mdFile) {
   return fs.readFileSync(mdFile, 'utf8');
 }
 
+// props.file - the metadata file to read
 function execute(serviceCtx, props, callback) {
   'use strict';
   assert(serviceCtx, 'serviceCtx param is missing');
   assert(props, 'props param is missing');
+  assert(props.file, util.format('props.file is missing:%j', props));
   assert(callback, 'callback param is missing');
-  assert(serviceCtx.config.METADATA_FILE, util.format('serviceCtx.config.METADATA_FILE is missing from:%j', serviceCtx.config));
   assert(serviceCtx.config.API_GATEWAY_URL, util.format('serviceCtx.config.API_GATEWAY_URL is missing from config:%j', serviceCtx.config));
 
   let md;
@@ -35,14 +36,14 @@ function execute(serviceCtx, props, callback) {
 
   // Read the metadata YAML file and convert to JSON
   try {
-    md = yaml.safeLoad(readFile(serviceCtx.config.METADATA_FILE));
+    md = yaml.safeLoad(readFile(props.file));
     serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'From-File-CreateMD-Read-Metadata-File',
-                            filename: serviceCtx.config.METADATA_FILE,
+                            filename: props.file,
                             metadata: md, }, loggingMD);
 
   } catch (e) {
     serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'From-File-CreateMD-Read-Metadata-File-ERROR',
-                            filename: serviceCtx.config.METADATA_FILE,
+                            filename: props.file,
                             error: e, }, loggingMD);
     return callback(e);
   }
