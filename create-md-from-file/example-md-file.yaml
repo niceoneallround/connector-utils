@@ -1,5 +1,11 @@
-#Test file used to create a privacy algorithm
-version: 1
+#
+# Example metadata file showing a domain and the ability to load resources.
+# In this case shows one resource being loaded, that is a privacy algorithm
+#
+version: '1'
+domain:
+  name: abc.com
+  data_model_id: http://abc.schema.webshield.io
 resources:
   - id: in-bound-pa
     type: PrivacyAlgorithm
