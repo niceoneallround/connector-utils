@@ -211,7 +211,7 @@ function createResources(serviceCtx, resources, callback) {
                       action: 'From-File-CreateMD-Read-Metadata-File-NO-RESOURCE-nodes-will-CONTINUE', }, loggingMD);
     return callback(null, results);
   } else {
-    serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'From-File-Create-Resoures-Need-Create',
+    serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'From-File-RESOURCES-READ-FROM-FILE',
                             domainName: serviceCtx.config.DOMAIN_NAME,
                             metadata: resources, }, loggingMD);
   }
@@ -249,9 +249,8 @@ function createOneMetadata(serviceCtx, md, callback) {
                           domainName: serviceCtx.config.DOMAIN_NAME,
                           metadata: md, }, loggingMD);
 
-  // FIXME add code to determine type and create the ID
   assert(md.id, util.format('Metadata does not have an id:%j', md));
-  let mdId = PNDataModel.ids.createPrivacyAlgorithmId(serviceCtx.config.DOMAIN_NAME, md.id);
+  let mdId = MDUtils.YAML2Id(md, { domainName: serviceCtx.config.DOMAIN_NAME });
 
   //
   // First fetch to see if already created, if so then no work

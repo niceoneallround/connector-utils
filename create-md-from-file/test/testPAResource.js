@@ -33,7 +33,7 @@ describe('test create metadata from file for Privacy Algorithm Resource', functi
       let fakeId1 = 'http://fake-domain-id1/pa#1';
 
       // need to nock out call to the PN to fetch the domain object - NOTE USE AWSGW version
-      let mdId = 'https://md.pn.id.webshield.io/privacy_algorithm/com/abc#in-bound-pa';
+      let mdId = 'https://md.pn.id.webshield.io/resource/com/abc#in-bound-pa';
       let mdIdParam = PNDataModel.ids.paramUtils.createMdParamFromMdId(mdId);
       let urlFrag = apigwRequestWrapper.utils.generateAWSGWFetchMetadataPathUrl(mdIdParam);
       console.log(urlFrag);
@@ -61,7 +61,7 @@ describe('test create metadata from file for Privacy Algorithm Resource', functi
       let fakeId2 = 'http://fake-domain-id2';
 
       // need to nock out call to the PN to fetch the domain object - NOTE USE AWSGW version
-      let mdId = 'https://md.pn.id.webshield.io/privacy_algorithm/com/abc#in-bound-pa';
+      let mdId = 'https://md.pn.id.webshield.io/resource/com/abc#in-bound-pa';
       let mdIdParam = PNDataModel.ids.paramUtils.createMdParamFromMdId(mdId);
       let urlFrag = apigwRequestWrapper.utils.generateAWSGWFetchMetadataPathUrl(mdIdParam);
       console.log(urlFrag);
