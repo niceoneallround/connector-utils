@@ -321,7 +321,7 @@ function createOneMetadata(serviceCtx, md, callback) {
     // NEED TO CREATE METADATA AS DOES NOT EXIST
     //
 
-    let mdNode = MDUtils.YAML2Metadata(md, {
+    let mdNode = MDUtils.YAML2Node(md, {
                   hostname: serviceCtx.config.DOMAIN_NAME,  // ok to use domain
                   domainName: serviceCtx.config.DOMAIN_NAME, });
 
