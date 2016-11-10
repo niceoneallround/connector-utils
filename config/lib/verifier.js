@@ -38,7 +38,7 @@ function verify(config) {
     }
 
     default: {
-      assert(false, util.format('unknown jwt siging type'));
+      assert(false, util.format('unknown jwt signing type in config.jwt.signer.alg:%j', config));
     }
   }
 }
