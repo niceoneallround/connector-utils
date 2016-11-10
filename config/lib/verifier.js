@@ -10,6 +10,7 @@ function verify(config) {
   'use strict';
 
   assert(config, 'no config parameter passed in');
+  console.log('CONFIG TO VERIFY', config);
 
   if (config.terminate_tls.enabled) {
     assert(config.terminate_tls.certificate_file, util.format('No config.terminate_tls.certificate_file property cannot configure:%j', config));
