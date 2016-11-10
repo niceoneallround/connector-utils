@@ -1,11 +1,29 @@
 /*jslint node: true, vars: true */
 
 const assert = require('assert');
+const configVerifier = require('./verifier').verify;
 const fs = require('fs');
 const util = require('util');
-const configVerifier = require('./verifier').verify;
+const yaml = require('js-yaml');
 
-// See example.config.yaml for what can be passed
+//
+// Create from a YAML file.  See example.config.yaml for what can be passed
+//
+function createFromYAML(yamlConfig, serviceName) {
+  'use strict';
+  assert(yamlConfig, 'no yamlConfig parameter passed in');
+  assert(serviceName, 'no serviceName parameter passed in');
+  let config = yaml.safeLoad(yamlConfig);
+  assert(config, util.format('No config from YAML config file:%s', yamlConfig));
+
+  let serviceConfig = config[serviceName];
+  assert(serviceConfig, util.format('No service config for service:%s: in config:%j', serviceName, config));
+
+  return create(serviceConfig);
+}
+
+//
+// Create from a JSON version of the YAML config file
 function create(config) {
   'use strict';
 
@@ -184,4 +202,5 @@ function readfile(path) {
 
 module.exports = {
   create: create,
+  createFromYAML: createFromYAML,
 };

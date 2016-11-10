@@ -12,8 +12,8 @@ function verify(config) {
   assert(config, 'no config parameter passed in');
 
   if (config.terminate_tls.enabled) {
-    assert(config.terminate_tls.certificate_file, util.format('No config.terminate_tlsproperty cannot configure:%j', config));
-    assert(config.terminate_tls.private_key_file, util.format('No config.terminate_tls property cannot configure:%j', config));
+    assert(config.terminate_tls.certificate_file, util.format('No config.terminate_tls.certificate_file property cannot configure:%j', config));
+    assert(config.terminate_tls.private_key_file, util.format('No config.terminate_tls.private_key_file property cannot configure:%j', config));
   }
 
   // Ensure the jwt configuration

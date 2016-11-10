@@ -1,0 +1,30 @@
+#
+# Standard config file for a connector.
+#
+version: '1'
+service_1:
+  DOMAIN_NAME: test2.com
+  LISTEN_PORT: 8080
+  LISTEN_PORT_INSIDE_DOCKER: 8080
+  internal_api_key: # FIXME THIS DOES NOT WORK RIGHT NOW
+    enabled: true
+    key_name: 'x-pn-hard-coded-api-key'
+    key: 'abc'
+  api_gateway:
+    url: api.url
+    webshield_api_key: api_key
+  metadata:
+    skip_startup_create: false
+  terminate_tls:
+    enabled: true
+    certificate_file:  '../test/test-data/file1'
+    private_key_file:  '../test/test-data/file2'
+  jwt:
+    signer:
+      alg: RS256
+      RS256:
+        certificate_file: '../test/test-data/file3'
+        public_key_file: '../test/test-data/file4'
+        private_key_file: '../test/test-data/file5'
+    verifier:
+      enabled: true
