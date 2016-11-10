@@ -1,0 +1,187 @@
+/*jslint node: true, vars: true */
+
+const assert = require('assert');
+const fs = require('fs');
+const util = require('util');
+const configVerifier = require('./verifier').verify;
+
+// See example.config.yaml for what can be passed
+function create(config) {
+  'use strict';
+
+  configVerifier(config);
+
+  let c = {};
+
+  // by default do not use unless an environmental to override.
+  // historic.
+  c.LOG_ENTRIES = false;
+
+  // the domain name in the config file can be overriden by an
+  // env.
+  if (process.env.DOMAIN_NAME) {
+    c.DOMAIN_NAME = process.env.DOMAIN_NAME;
+  } else if (config.DOMAIN_NAME) {
+    c.DOMAIN_NAME = config.DOMAIN_NAME;
+  }
+
+  // VERSION NUMBER IS BAKED INTO DOCKER IMAGE AS AN ENV.
+  c.VERSION_NUMBER = 'not-set';
+  if (process.env.VERSION_NUMBER) {
+    c.VERSION_NUMBER = process.env.VERSION_NUMBER;
+  }
+
+  // HOSTNAME IS PASSED IN AS A Process Env.
+  c.HOSTNAME = 'localhost';
+  if (process.env.HOSTNAME) {
+    c.HOSTNAME = process.env.HOSTNAME;
+  }
+
+  // LISTEN_PORT can be overriden by env
+  c.LISTEN_PORT = 8080;
+  if (process.env.LISTEN_PORT) {
+    c.LISTEN_PORT = process.env.LISTEN_PORT;
+  } else if (config.LISTEN_PORT) {
+    c.LISTEN_PORT = config.LISTEN_PORT;
+  }
+
+  c.LISTEN_PORT_INSIDE_DOCKER = 8080;
+  if (process.env.LISTEN_PORT_INSIDE_DOCKER) {
+    c.LISTEN_PORT_INSIDE_DOCKER = process.env.LISTEN_PORT_INSIDE_DOCKER;
+  } else if (config.LISTEN_PORT_INSIDE_DOCKER) {
+    c.LISTEN_PORT_INSIDE_DOCKER = config.LISTEN_PORT_INSIDE_DOCKER;
+  }
+
+  //
+  // TLS - copy over as is
+  //
+  c.terminate_tls = {};
+  c.terminate_tls.enabled = false;
+  if (config.terminate_tls.enabled) {
+    c.terminate_tls.enabled = true;
+    c.terminate_tls.certificate_file = config.terminate_tls.certificate_file;
+    c.terminate_tls.private_key_file = config.terminate_tls.private_key_file;
+  }
+
+  c.PROTOCOL = 'http';
+  if ((config.terminate_tls) && (config.terminate_tls.enabled)) {
+    c.PROTOCOL = 'https';
+  }
+
+  //
+  // METADATA
+  //
+
+  c.SKIP_STARTUP_CREATE_METADATA = '0';
+  if (process.env.SKIP_STARTUP_CREATE_METADATA) {
+    c.SKIP_STARTUP_CREATE_METADATA = process.env.SKIP_STARTUP_CREATE_METADATA;
+  } else if (config.metadata.skip_startup_create) {
+    c.SKIP_STARTUP_CREATE_METADATA = '1';
+  }
+
+  //-----------------------
+  //  API GATEWAY AND KEY
+  //------------------------
+
+  if (process.env.API_GATEWAY_URL) {
+    c.API_GATEWAY_URL = process.env.API_GATEWAY_URL;
+  } else if (config.api_gateway.url) {
+    c.API_GATEWAY_URL = config.api_gateway.url;
+  }
+
+  if (process.env.WEBSHIELD_API_KEY) {
+    c.WEBSHIELD_API_KEY = process.env.WEBSHIELD_API_KEY;
+  } else if (config.api_gateway.webshield_api_key) {
+    c.WEBSHIELD_API_KEY = config.api_gateway.webshield_api_key;
+  }
+
+  //
+  // JWT CONFIG
+  //
+  let signer = config.jwt.signer;
+  switch (signer.alg) {
+
+    case 'HS256': {
+      c.crypto = {};
+      c.crypto.jwt = {};
+      c.crypto.jwt.issuer = c.DOMAIN_NAME;
+      c.crypto.jwt.type = 'HS256';
+
+      let secret = signer.HS256.secret;
+      if (process.env.JWT_SECRET) {
+        secret = process.env.JWT_SECRET;
+      }
+
+      assert(secret, util.format('No config.jwt.signer.HS256.secret or JWT_SECRET property cannot configure signing JWTs:%j', config));
+      c.crypto.jwt.secret = secret;
+      break;
+    }
+
+    case 'RS256': {
+      c.crypto = {};
+      c.crypto.jwt = {};
+      c.crypto.jwt.issuer = c.DOMAIN_NAME;
+      c.crypto.jwt.type = 'RS256';
+
+      // the certficate file
+      let x509Cert = readfile(signer.RS256.certificate_file);
+      assert(x509Cert, util.format('No certificate_file configure signing JWTs:%j', config));
+      c.crypto.jwt.x509Cert = x509Cert;
+
+      // the public key file
+      let publicKey = readfile(signer.RS256.public_key_file);
+      assert(publicKey, util.format('No public_key_file configure signing JWTs:%j', config));
+      c.crypto.jwt.publicKey = publicKey;
+
+      // the rsa private key
+      let rsaPrivateKey = readfile(signer.RS256.private_key_file);
+      assert(rsaPrivateKey, util.format('No private_key_file configure signing JWTs:%j', config));
+      c.crypto.jwt.secret = rsaPrivateKey;
+      break;
+    }
+
+    default: {
+      assert(false, util.format('unknown jwt siging type'));
+    }
+  }
+
+  //
+  // Determine if JWTs need to be verified
+  c.VERIFY_JWT = true;
+  if (process.env.VERIFY_JWT) {
+    if (process.env.VERIFY_JWT.toLowerCase() === 'false') {
+      c.VERIFY_JWT = false;
+    }
+  } else if (config.jwt.verifier) {
+    if (config.jwt.verifier.enabled) {
+      c.VERIFY_JWT = true;
+    } else {
+      c.VERIFY_JWT = false;
+    }
+  }
+
+  c.getHost = function getHost() {
+    return c.PROTOCOL + '://' + c.getHostnameWithPort(c);
+  };
+
+  c.getHostnameWithPort = function getHostnameWithPort(c) {
+    return c.HOSTNAME + ':' + 'c.LISTEN_PORT';
+  };
+
+  //
+  // Finally record the passed in config file
+  //
+  c.passedInConfigurationFile = config;
+
+  return c;
+}
+
+// convenice routine for reading file
+function readfile(path) {
+  'use strict';
+  return fs.readFileSync(__dirname + '/' + path).toString();
+}
+
+module.exports = {
+  create: create,
+};

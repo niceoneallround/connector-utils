@@ -1,0 +1,35 @@
+#
+# Standard config file for a connector.
+#
+version: '1'
+service-name: # data-connector,
+  # capitals mean the parametere can be overridden by an Encironmental Variable.
+  DOMAIN_NAME: #the domain name (CNAME) the service should be using, can be overriden by an env
+  LISTEN_PORT: 8080 # the listen port, can be overriden by an env
+  LISTEN_PORT_INSIDE_DOCKER: 8080 # FIXME look at
+  internal_api_key: # FIXME THIS DOES NOT WORK RIGHT NOW
+    enabled: true
+    key_name: 'x-pn-hard-coded-api-key'
+    key: 'abc'
+  api_gateway:
+    url: # can be overridden by env API_GATEWAY_URL
+    webshield_api_key: # can be overridden by env WEBSHIELD_API_KEY
+  metadata:
+    skip_startup_create: false  # can be overridden by an env SKIP_STARTUP_CREATE_METADATA
+  terminate_tls:
+    enabled: true
+    certficate_file: 'default'
+    private_key_file: 'default'
+  jwt:
+    signer: # issuer is the DOMAIN_NAME
+      alg: # see https://www.rfc-editor.org/rfc/rfc7518.txt - supported are 'HS256 or RS256 from JWS specification'
+      # future add expiration_time: 5m
+      # future add nonce_length: 32 # length of generated nonce
+      RS256:
+        certficate_file: #the certificate crt file - openssl x509 -req -days 1000 -in rsa.csr -signkey rsa-private.pem -out rsa.x509crt
+        public_key_file: #the public key pem file - openssl rsa -in rsa-private.pem -pubout > rsa-public.pem
+        private_key_file: #the private key pem file - openssl genrsa 2048 > rsa-private.pem
+      #HS256:
+        #secret: 'the secret to use for signing if using hs256 - shoud only use for testing, can be overridden by JWT_SECRET'
+    verifier:
+      enabled: true # can be overridden by JWT_VERFIY
