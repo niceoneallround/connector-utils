@@ -189,7 +189,7 @@ function create(config) {
   //
   // Finally record the passed in config file
   //
-  c.passedInConfigurationFile = config;
+  c.PASSED_IN_CONFIG_FILE = config;
 
   return c;
 }
