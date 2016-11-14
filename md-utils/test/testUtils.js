@@ -4,8 +4,11 @@ const conMDUtils = require('../lib/utils');
 const HttpStatus = require('http-status');
 const JWTUtils = require('jwt-utils/lib/jwtUtils').jwtUtils;
 const nock = require('nock');
-const MDUtils = require('metadata/lib/md').utils;
-const PNDataModel = require('data-models/lib/PNDataModel');
+
+//const MDUtils = require('metadata/lib/md').utils;
+const PACanons = require('metadata/lib/privacyAlgorithmV2').canons;
+
+//const PNDataModel = require('data-models/lib/PNDataModel');
 const should = require('should');
 const testUtils = require('node-utils/testing-utils/lib/utils');
 const util = require('util');
@@ -21,41 +24,12 @@ describe('Utils-Metadata', function () {
   }
 
   function createPrivacyAlgorithm() {
-    let yaml = {
-      id: '23',
-      type: 'privacyalgorithmv2',
-      description: 'A valid PA that shows all the mandatory fields, except this one',
-      privacy_step: [{
-        id: 'pstep-1',
-        description: 'a test privacy step',
-        node_type: 'connector',
-        privacy_action: [{
-          id: 'paction-1',
-          content_obfuscation_algorithm: 'A256GCM',
-          obfuscation_provider: 'http://ionicsecurity.com',
-          kms: 'http://md.pn.id.webshield.io/resource/com/acme#my-kms',
-          skip_orchestration: false,
-          schema:  {
-            $schema: 'http://experian.schema.webshield.io',
-            'http//json-schema.org/title': 'http://experian.schema.webshield.io/type#Subject',
-            'http://json-schema.org/type': 'object', },
-        },
-      ],
-      },
-      ],
-    };
 
-    // create a JSONLD node
-    let md = MDUtils.YAML2Node(yaml,
-                { hostname: dummyServiceCtx.config.getHostname(),
-                  domainName: dummyServiceCtx.config.DOMAIN_NAME,
-                  issuer: 'abc.com', creationTime: '282828', });
+    let props =   { hostname: dummyServiceCtx.config.getHostname(),
+        domainName: dummyServiceCtx.config.DOMAIN_NAME,
+        issuer: 'abc.com', creationTime: '282828', };
 
-    if (PNDataModel.errors.isError(md)) {
-      assert(false, util.format('failed to create privacy algorithm:%j', md));
-    }
-
-    return md;
+    return PACanons.createPrivacyAlgorithm(props);
   }
 
   before(function (done) {
