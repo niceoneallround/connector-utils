@@ -30,7 +30,7 @@ var callbacks = {};
 // added as worked on v2 as no idea why needed to pass in the req, and res for
 // create pipe, seemed bogus
 //
-promises.promiseFetchMetadata = function promiseFetchMetadata(serviceCtx, mdId, props) {
+promises.fetchMetadata = function promiseFetchMetadata(serviceCtx, mdId, props) {
   'use strict';
   return new Promise(function (resolve, reject) {
     callbacks.fetchMetadata(serviceCtx, mdId, props, function (err, mdResource) {

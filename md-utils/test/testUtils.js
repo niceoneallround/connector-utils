@@ -90,7 +90,7 @@ describe('Utils-Metadata', function () {
               ];
             });
 
-      conMDUtils.promises.promiseFetchMetadata(dummyServiceCtx, mdId, {})
+      conMDUtils.promises.fetchMetadata(dummyServiceCtx, mdId, {})
         .then(
           function (mdResource) {
             mdResource.should.have.property('@id');
@@ -123,7 +123,7 @@ describe('Utils-Metadata', function () {
               ];
             });
 
-      conMDUtils.promises.promiseFetchMetadata(dummyServiceCtx, mdId, {})
+      conMDUtils.promises.fetchMetadata(dummyServiceCtx, mdId, {})
         .then(
           function () {
             assert(false, 'should not get here as an error');
@@ -131,6 +131,7 @@ describe('Utils-Metadata', function () {
           }
         )
         .catch(function () {
+          console.log('-------SHOULD GET AN UNEXPECTED-ERROR NOT-FOUND 404');
           assert(true, 'should-get-here-as-an-error');
           done();
         });
