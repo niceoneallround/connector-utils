@@ -90,18 +90,35 @@ function create(config) {
   // METADATA
   //
 
+  /*
+     Setup the metadata parameters, they are both at the top level props and
+     inside the metadata object. The file values can be overridden by envs at
+     runtime.
+  */
+
+  c.metadata = {};
   c.SKIP_STARTUP_CREATE_METADATA = '0';
+  c.metadata.skip_startup_create = false;
   if (process.env.SKIP_STARTUP_CREATE_METADATA) {
     c.SKIP_STARTUP_CREATE_METADATA = process.env.SKIP_STARTUP_CREATE_METADATA;
+    if (c.SKIP_STARTUP_CREATE_METADATA === '1') {
+      c.metadata.skip_startup_create = true;
+    }
   } else if (config.metadata.skip_startup_create) {
     c.SKIP_STARTUP_CREATE_METADATA = '1';
+    c.metadata.skip_startup_create = config.metadata.skip_startup_create;
+  }
+
+  if (process.env.METADATA_FILE) {
+    c.metadata.file = process.env.METADATA_FILE;
+  } else if (config.metadata.file) {
+    c.metadata.file = config.metadata.file;
   }
 
   /*
-      setup API GATEWAY URL and KEY - can be set as props in the file that
-      can be overridden by envs. In config set both the api_gateway props
-      and the top level API_GATEWAY_URL and WEBSHIELD_API_KEY props so can
-      access from either
+     setup API GATEWAY URL and KE, they are both at the top level props and
+     inside the metadata object. The file values can be overridden by envs at
+     runtime.
   */
 
   c.api_gateway = { url: null, webshield_api_key: null };

@@ -19,6 +19,7 @@ function createCanonConfigFile() {
         webshield_api_key: '23',
       },
       metadata: {
+        file: 'a.1',
         skip_startup_create: false,
       },
       terminate_tls: {
@@ -96,6 +97,9 @@ function commonVerifyValid(c, cf) {
   c.should.have.property('PROTOCOL', 'https');
 
   c.should.have.property('SKIP_STARTUP_CREATE_METADATA', '0');
+  c.should.have.property('metadata');
+  c.metadata.should.have.property('file', cf.metadata.file);
+  c.metadata.should.have.property('skip_startup_create', false);
 
   c.should.have.property('crypto');
   c.crypto.should.have.property('jwt');

@@ -15,7 +15,8 @@ service-name: # data-connector,
     url: # can be overridden by env API_GATEWAY_URL
     webshield_api_key: # can be overridden by env WEBSHIELD_API_KEY
   metadata:
-    skip_startup_create: false  # can be overridden by an env SKIP_STARTUP_CREATE_METADATA
+    file: 'a.1' # the metadata file to read at start and load
+    skip_startup_create: false  #  can be overridden by an env SKIP_STARTUP_CREATE_METADATA to '0' or '1'
   terminate_tls:
     enabled: true
     certficate_file: 'default'

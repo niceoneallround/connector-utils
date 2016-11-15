@@ -15,6 +15,7 @@ service_1:
     webshield_api_key: api_key
   metadata:
     skip_startup_create: false
+    file: 'a.1'
   terminate_tls:
     enabled: true
     certificate_file:  '../test/test-data/file1'
