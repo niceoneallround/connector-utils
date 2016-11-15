@@ -317,16 +317,12 @@ function createOneMetadata(serviceCtx, md, callback) {
     }
 
     //
-    // NEED TO CREATE METADATA AS DOES NOT EXIST - NOTE i needed to set the
-    // issuer and creation time to some value so that verify will pass. These
-    // will actually be set in the JWT and copied from there. So bogus
+    // NOT-FOUND NEED TO CREATE METADATA AS DOES NOT EXIST
     //
 
     let mdNode = MDUtils.YAML2Node(md, {
                   hostname: serviceCtx.config.DOMAIN_NAME,  // ok to use domain
-                  domainName: serviceCtx.config.DOMAIN_NAME,
-                  issuer: 'will-be-set-from-jwt-later-but-add-so-verify-will-pass',
-                  creationTime: 'will-be-set-from-jwt-later-but-add-so-verify-will-pass', });
+                  domainName: serviceCtx.config.DOMAIN_NAME, });
 
     if (PNDataModelError.isError(mdNode)) {
       serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
@@ -346,7 +342,7 @@ function createOneMetadata(serviceCtx, md, callback) {
                           metadata: mdNode, }, loggingMD);
 
     // for sanity make sure that the id looked for is the same as created
-    assert((mdId === mdNode['@id']), util.format('The fetched id is not the same as the created\n f:%s\nc:%s',
+    assert((mdId === mdNode['@id']), util.format('The requested md id is not the same as the new one created\nwant:%s\ngott:%s',
                       mdId, mdNode['@id']));
 
     let mdJWT = JWTUtils.signMetadata(mdNode, serviceCtx.config.crypto.jwt, { subject: mdNode['@id'] });

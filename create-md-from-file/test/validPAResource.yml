@@ -2,12 +2,23 @@
 version: 1
 resources:
   - id: in-bound-pa
-    type: PrivacyAlgorithm
-    description: A valid PA so tests will run
+    type: PrivacyAlgorithmV2
+    description: A valid PA that shows all the mandatory fields, except this one
     privacy_step:
-      - id: in-bound-pa-ps
+      - id: in-bound-pstep
+        description: a test privacy step with all properties, but not type
+        client: client.com
+        next: next.com
         node_type: connector
         privacy_action:
-          - id: in-bound-pa-ps
-            action: obfuscate
-            node_type: external
+          - id: in-bound-paction
+            description: test pa includes all possible props
+            content_obfuscation_algorithm: A256GCM
+            obfuscation_provider: http://ionicsecurity.com
+            obfuscation_service: fake.id
+            kms: http://md.pn.id.webshield.io/resource/com/acme#my-kms
+            skip_orchestration: false
+            schema:  {
+              $schema: 'http://experian.schema.webshield.io',
+              'http//json-schema.org/title': 'http://experian.schema.webshield.io/type#Subject',
+              'http://json-schema.org/type': 'object' }
