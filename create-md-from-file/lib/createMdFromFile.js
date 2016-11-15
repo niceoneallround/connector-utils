@@ -259,7 +259,7 @@ function createOneMetadata(serviceCtx, md, callback) {
   let domainIdParam = PNDataModel.ids.paramUtils.createParamFromDomain(serviceCtx.config.DOMAIN_NAME);
 
   serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'From-File-Create-One-Metadata-generated-IDs',
-                          domainName: serviceCtx.config.DOMAIN_NAME,
+                          domainName: serviceCtx.config.DOMAIN_NAME, fileMdId: md.id,
                           mdId: mdId, mdIdParam: mdIdParam, domainIdParam: domainIdParam,
                         }, loggingMD);
 
@@ -317,12 +317,16 @@ function createOneMetadata(serviceCtx, md, callback) {
     }
 
     //
-    // NEED TO CREATE METADATA AS DOES NOT EXIST
+    // NEED TO CREATE METADATA AS DOES NOT EXIST - NOTE i needed to set the
+    // issuer and creation time to some value so that verify will pass. These
+    // will actually be set in the JWT and copied from there. So bogus
     //
 
     let mdNode = MDUtils.YAML2Node(md, {
                   hostname: serviceCtx.config.DOMAIN_NAME,  // ok to use domain
-                  domainName: serviceCtx.config.DOMAIN_NAME, });
+                  domainName: serviceCtx.config.DOMAIN_NAME,
+                  issuer: 'will-be-set-from-jwt-later-but-add-so-verify-will-pass',
+                  creationTime: 'will-be-set-from-jwt-later-but-add-so-verify-will-pass', });
 
     if (PNDataModelError.isError(mdNode)) {
       serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
