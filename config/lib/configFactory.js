@@ -97,20 +97,29 @@ function create(config) {
     c.SKIP_STARTUP_CREATE_METADATA = '1';
   }
 
-  //-----------------------
-  //  API GATEWAY AND KEY
-  //------------------------
+  /*
+      setup API GATEWAY URL and KEY - can be set as props in the file that
+      can be overridden by envs. In config set both the api_gateway props
+      and the top level API_GATEWAY_URL and WEBSHIELD_API_KEY props so can
+      access from either
+  */
+
+  c.api_gateway = { url: null, webshield_api_key: null };
 
   if (process.env.API_GATEWAY_URL) {
     c.API_GATEWAY_URL = process.env.API_GATEWAY_URL;
+    c.api_gateway.url = c.API_GATEWAY_URL;
   } else if (config.api_gateway.url) {
     c.API_GATEWAY_URL = config.api_gateway.url;
+    c.api_gateway.url = c.API_GATEWAY_URL;
   }
 
   if (process.env.WEBSHIELD_API_KEY) {
     c.WEBSHIELD_API_KEY = process.env.WEBSHIELD_API_KEY;
+    c.api_gateway.webshield_api_key = c.WEBSHIELD_API_KEY;
   } else if (config.api_gateway.webshield_api_key) {
     c.WEBSHIELD_API_KEY = config.api_gateway.webshield_api_key;
+    c.api_gateway.webshield_api_key = c.WEBSHIELD_API_KEY;
   }
 
   //
