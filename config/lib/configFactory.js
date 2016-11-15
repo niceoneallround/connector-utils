@@ -105,6 +105,8 @@ function create(config) {
   */
 
   c.api_gateway = { url: null, webshield_api_key: null };
+  c.API_GATEWAY_URL = null;
+  c.WEBSHIELD_API_KEY = null;
 
   if (process.env.API_GATEWAY_URL) {
     c.API_GATEWAY_URL = process.env.API_GATEWAY_URL;
