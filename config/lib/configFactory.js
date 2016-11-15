@@ -182,6 +182,10 @@ function create(config) {
     return c.PROTOCOL + '://' + c.getHostnameWithPort(c);
   };
 
+  c.getHost = function getHostname() {
+    return c.HOSTNAME;
+  };
+
   c.getHostnameWithPort = function getHostnameWithPort(c) {
     return c.HOSTNAME + ':' + 'c.LISTEN_PORT';
   };
