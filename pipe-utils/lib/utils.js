@@ -128,10 +128,19 @@ callbacks.createPrivacyPipe = function createPrivacyPipe(serviceCtx, requestId, 
 
         let payload = JWTUtils.decode(response.body); // decode as may not have verified
 
-        let result = { pipe: payload[JWTClaims.METADATA_CLAIM] };
+        let result = { pipe: payload[JWTClaims.METADATA_CLAIM] }; // pipe is in metadata claim
 
         if (payload[JWTClaims.PROVISION_CLAIM]) {
           result.provision = payload[JWTClaims.PROVISION_CLAIM];
+        }
+
+        if (result.provision) {
+          serviceCtx.logger.logProgress(util.format('SYNDICATION REQUEST: %s CREATED PRIVACY PIPE: %s - PROVISION RETURNED: %s',
+                requestId, result.pipe['@id'], result.provision['@id']));
+
+        } else {
+          serviceCtx.logger.logProgress(util.format('SYNDICATION REQUEST: %s CREATED PRIVACY PIPE: %s - NO PROVISION RETURNED',
+                requestId, result.pipe['@id']));
         }
 
         serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,

@@ -98,7 +98,7 @@ describe('Create PrivacyPipe Tests', function () {
     //
     let md = { '@id': 'fake_md' };
     let props = {
-      provision: 'fake_provision',
+      provision: { '@id': 'fake_provision' },
       subject: md['@id'],
     };
 
