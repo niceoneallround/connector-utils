@@ -12,6 +12,7 @@ const assert = require('assert');
 const JWTClaims = require('jwt-utils/lib/jwtUtils').claims;
 const JWTUtils = require('jwt-utils/lib/jwtUtils').jwtUtils;
 const HttpStatus = require('http-status');
+const MDUtils = require('metadata/lib/md').utils;
 const moment = require('moment');
 const PNDataModel = require('data-models/lib/PNDataModel');
 const PN_T = PNDataModel.TYPE;
@@ -128,18 +129,28 @@ callbacks.createPrivacyPipe = function createPrivacyPipe(serviceCtx, requestId, 
 
         let payload = JWTUtils.decode(response.body); // decode as may not have verified
 
-        let result = { pipe: payload[JWTClaims.METADATA_CLAIM] }; // pipe is in metadata claim
+        // generate the pipe JSONLD node from the JWT
+        let newPipe = MDUtils.JWTPayload2Node(payload, serviceCtx.config.getHostname());
+        if (PNDataModel.errors.isError(newPipe)) {
+          serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
+                            action: 'Create-PRIVACY-PIPE-PB-response-ERROR-CANNOT-CONVERT-JWT-to-PIPE',
+                            requestId: requestId, pipeId: pipe['@id'],
+                            error: newPipe, }, loggingMD);
+          return callback(null, newPipe);
+        }
+
+        let result = { pipe: newPipe }; // pipe is in metadata claim
 
         if (payload[JWTClaims.PROVISION_CLAIM]) {
           result.provision = payload[JWTClaims.PROVISION_CLAIM];
         }
 
         if (result.provision) {
-          serviceCtx.logger.logProgress(util.format('SYNDICATION REQUEST: %s CREATED PRIVACY PIPE: %s - PROVISION RETURNED: %s',
+          serviceCtx.logger.logProgress(util.format('REQUEST: %s CREATED PRIVACY PIPE: %s - PROVISION RETURNED: %s',
                 requestId, result.pipe['@id'], result.provision['@id']));
 
         } else {
-          serviceCtx.logger.logProgress(util.format('SYNDICATION REQUEST: %s CREATED PRIVACY PIPE: %s - NO PROVISION RETURNED',
+          serviceCtx.logger.logProgress(util.format('REQUEST: %s CREATED PRIVACY PIPE: %s - NO PROVISION RETURNED',
                 requestId, result.pipe['@id']));
         }
 

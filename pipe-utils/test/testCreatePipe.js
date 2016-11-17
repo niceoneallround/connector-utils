@@ -1,6 +1,7 @@
 /*jslint node: true, vars: true */
 const assert = require('assert');
 const pipeUtils = require('../lib/utils');
+const PPCanons = require('metadata/lib/privacyPipe').canons;
 const HttpStatus = require('http-status');
 const JWTUtils = require('jwt-utils/lib/jwtUtils').jwtUtils;
 const nock = require('nock');
@@ -96,12 +97,14 @@ describe('Create PrivacyPipe Tests', function () {
     // need to return a JWT that has a metadata claim and a provision claim
     // does not matter what is in it
     //
-    let md = { '@id': 'fake_md' };
-    let props = {
+    let props = { hostname: dummyServiceCtx.config.getHostname(), domainName: dummyServiceCtx.config.DOMAIN_NAME, };
+    let pipe = PPCanons.createPrivacyPipe(props);
+
+    props = {
       provision: { '@id': 'fake_provision' },
-      subject: md['@id'],
+      subject: pipe['@id'],
     };
 
-    return JWTUtils.signMetadata(md, dummyServiceCtx.config.crypto.jwt, props);
+    return JWTUtils.signMetadata(pipe, dummyServiceCtx.config.crypto.jwt, props);
   }
 }); // describe
