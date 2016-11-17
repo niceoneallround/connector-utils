@@ -146,11 +146,11 @@ callbacks.createPrivacyPipe = function createPrivacyPipe(serviceCtx, requestId, 
         }
 
         if (result.provision) {
-          serviceCtx.logger.logProgress(util.format('REQUEST: %s CREATED PRIVACY PIPE: %s - PROVISION RETURNED: %s',
+          serviceCtx.logger.logProgress(util.format('REQUEST: %s CREATED PRIVACY PIPE OK: %s - PROVISION RETURNED: %s',
                 requestId, result.pipe['@id'], result.provision['@id']));
 
         } else {
-          serviceCtx.logger.logProgress(util.format('REQUEST: %s CREATED PRIVACY PIPE: %s - NO PROVISION RETURNED',
+          serviceCtx.logger.logProgress(util.format('REQUEST: %s CREATED PRIVACY PIPE OK: %s - NO PROVISION RETURNED',
                 requestId, result.pipe['@id']));
         }
 
