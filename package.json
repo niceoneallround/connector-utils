@@ -1,6 +1,6 @@
 {
   "name": "connector-utils",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Utis used by all connectors",
   "main": "index.js",
   "scripts": {

@@ -167,12 +167,13 @@ callbacks.createPrivacyPipe = function createPrivacyPipe(serviceCtx, requestId, 
       case HttpStatus.BAD_REQUEST: {
         // bad request is returned as an application/json
         if (response.headers['content-type'] === 'application/json') {
+          let err = JSON.parse(response.body);
           serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
                                     action: 'Create-PRIVACY-PIPE-FAILED-BAD-REQUEST',
                                     requestId: requestId,
                                     pipeId: pipe['@id'],
                                     metadata: pipe,
-                                    error: response.body, }, loggingMD);
+                                    error: err, }, loggingMD);
 
           return callback(null, JSON.parse(response.body));
 
