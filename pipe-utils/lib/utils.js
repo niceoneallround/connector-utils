@@ -167,6 +167,7 @@ callbacks.createPrivacyPipe = function createPrivacyPipe(serviceCtx, requestId, 
       case HttpStatus.BAD_REQUEST: {
         // bad request is returned as an application/json
         if (response.headers['content-type'] === 'application/json') {
+          console.log('*****----HEADERS are', response.headers);
           console.log('*****----BODY IS', response.body);
           console.log('*******---- TYPEOF BODY IS:%s', typeof response.body);
           let err = JSON.parse(response.body);
