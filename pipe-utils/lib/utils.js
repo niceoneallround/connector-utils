@@ -22,8 +22,8 @@ const loggingMD = {
     ServiceType: 'pipe-utils',
     FileName: 'pipe-utils/utils.js', };
 
-var promises = {};
-var callbacks = {};
+let promises = {};
+let callbacks = {};
 
 /*
  CREATE PRIVACY PIPE
@@ -167,17 +167,7 @@ callbacks.createPrivacyPipe = function createPrivacyPipe(serviceCtx, requestId, 
       case HttpStatus.BAD_REQUEST: {
         // bad request is returned as an application/json
         if (response.headers['content-type'] === 'application/json') {
-          console.log('*****----HEADERS are', response.headers);
-          console.log('*****----BODY IS', response.body);
-          console.log('*******---- TYPEOF BODY IS:%s', typeof response.body);
           let err = JSON.parse(response.body);
-          console.log('*****----JSON.parse BODY IS', err);
-          console.log('*******---- TYPEOF err IS:%s', typeof err);
-          if (typeof err === 'string') {
-            let err2 = JSON.parse(err);
-            console.log('*******---- STILL A STRING TYPEOF err2 IS:%s', typeof err2);
-          }
-
           serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
                                     action: 'Create-PRIVACY-PIPE-FAILED-BAD-REQUEST',
                                     requestId: requestId,
@@ -185,7 +175,7 @@ callbacks.createPrivacyPipe = function createPrivacyPipe(serviceCtx, requestId, 
                                     pipe: pipe,
                                     error: err, }, loggingMD);
 
-          return callback(null, JSON.parse(response.body));
+          return callback(null, err);
 
         } else {
           serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
