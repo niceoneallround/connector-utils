@@ -170,6 +170,8 @@ callbacks.createPrivacyPipe = function createPrivacyPipe(serviceCtx, requestId, 
           console.log('*******---- TYPEOF BODY IS:%s', typeof response.body);
           let err = JSON.parse(response.body);
           console.log('*******---- TYPEOF err IS:%s', typeof err);
+          let err2 = JSON.parse(response.body);
+          console.log('*******---- TYPEOF err2 IS:%s', typeof err2);
           serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
                                     action: 'Create-PRIVACY-PIPE-FAILED-BAD-REQUEST',
                                     requestId: requestId,
