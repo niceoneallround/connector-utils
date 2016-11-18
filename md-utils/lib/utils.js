@@ -20,8 +20,8 @@ const loggingMD = {
     ServiceType: 'md-utils',
     FileName: 'md-utils/utils.js', };
 
-var promises = {};
-var callbacks = {};
+let promises = {};
+let callbacks = {};
 
 //---------------------
 // Fetch metadata
