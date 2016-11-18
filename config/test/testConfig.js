@@ -18,6 +18,10 @@ function createCanonConfigFile() {
         url: 'url1',
         webshield_api_key: '23',
       },
+      is: {
+        post_subject_url: 'post_subject_url',
+        post_subject_query_url: 'post_subject_query_url',
+      },
       metadata: {
         file: 'a.1',
         skip_startup_create: false,
@@ -89,6 +93,10 @@ function commonVerifyValid(c, cf) {
 
   c.should.have.property('API_GATEWAY_URL', cf.api_gateway.url);
   c.should.have.property('WEBSHIELD_API_KEY', cf.api_gateway.webshield_api_key);
+
+  c.should.have.property('is');
+  c.is.should.have.property('post_subject_url', 'post_subject_url');
+  c.is.should.have.property('post_subject_query_url', 'post_subject_query_url');
 
   c.should.have.property('terminate_tls');
   c.terminate_tls.should.have.property('enabled', true);

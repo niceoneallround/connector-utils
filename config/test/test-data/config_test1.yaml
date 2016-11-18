@@ -13,6 +13,9 @@ service_1:
   api_gateway:
     url: api.url
     webshield_api_key: api_key
+  is:
+    post_subject_url: 'post_subject_url'
+    post_subject_query_url: 'post_subject_query_url'
   metadata:
     skip_startup_create: false
     file: 'a.1'

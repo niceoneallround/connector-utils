@@ -21,6 +21,9 @@ service-name: # data-connector,
     enabled: true
     certficate_file: 'default'
     private_key_file: 'default'
+  is: # identity syndicate configuration
+    post_subject_url:
+    post_subject_query_url:
   jwt:
     signer: # issuer is the DOMAIN_NAME
       alg: # see https://www.rfc-editor.org/rfc/rfc7518.txt - supported are 'HS256 or RS256 from JWS specification'
