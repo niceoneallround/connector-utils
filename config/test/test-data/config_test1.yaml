@@ -16,6 +16,8 @@ service_1:
   is:
     post_subject_url: 'post_subject_url'
     post_subject_query_url: 'post_subject_query_url'
+  privacy_agent:
+    id: 'https://md.pn.id.webshield.io/privacy_agent/com/me#1'
   metadata:
     skip_startup_create: false
     file: 'a.1'

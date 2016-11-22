@@ -31,6 +31,9 @@ function createCanonConfigFile() {
         certificate_file: '../test/test-data/file1',
         private_key_file: '../test/test-data/file2',
       },
+      privacy_agent: {
+        id: 'https://md.pn.id.webshield.io/privacy_agent/com/me#1',
+      },
       jwt: {
         signer: {
           alg: 'RS256',
@@ -97,6 +100,9 @@ function commonVerifyValid(c, cf) {
   c.should.have.property('is');
   c.is.should.have.property('post_subject_url', 'post_subject_url');
   c.is.should.have.property('post_subject_query_url', 'post_subject_query_url');
+
+  c.should.have.property('privacy_agent');
+  c.privacy_agent.should.have.property('id');
 
   c.should.have.property('terminate_tls');
   c.terminate_tls.should.have.property('enabled', true);

@@ -104,6 +104,14 @@ function create(config) {
     c.is.post_subject_query_url = config.is.post_subject_query_url;
   }
 
+  //
+  // ADD ANY PRIVACY AGENT CONFIGURATION
+  //
+  if (config.privacy_agent) {
+    c.privacy_agent = {};
+    c.privacy_agent.id = config.privacy_agent.id;
+  }
+
   //----------
   // METADATA
   //-----------
