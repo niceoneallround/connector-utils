@@ -1,6 +1,6 @@
 {
   "name": "connector-utils",
-  "version": "0.2.5",
+  "version": "0.3.0",
   "description": "Utis used by all connectors",
   "main": "index.js",
   "scripts": {
@@ -40,6 +40,7 @@
     "jwt-utils": "git://github.com/niceoneallround/jwt-utils.git",
     "metadata": "git://github.com/niceoneallround/metadata.git",
     "moment": "^2.16.0",
-    "node-utils": "git://github.com/niceoneallround/node-utils.git"
+    "node-utils": "git://github.com/niceoneallround/node-utils.git",
+    "uuid": "^3.0.0"
   }
 }
