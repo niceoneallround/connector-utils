@@ -52,7 +52,9 @@ let utils = {}; // expsose to support testing
 //
 // Returns the following
 //  - array of encrypt item
-//  - map < encrypt_item_id, { id: <object id>, key: <property name } || { id: <object id>, embedKey: <embed key name>, key: <prop name>}>
+//  - map
+//     - non embedded prop < encrypt_item_id, { id: <object id>, key: <property name }
+//     - embed prop { id: <object id>, embedKey: <embed key name>, embed: { id: <embed object id>, key: <embed property name }}>
 //
 promises.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph, schema, type, props) {
   'use strict';
@@ -107,14 +109,16 @@ callbacks.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph
   // Find nodes of type schema.title in the graph
   //
   JSONLDPromises.frame(graph, schema.title, false)
-  .then(function (result) {
+  .then(function (matchedNodes) {
     let subjects;
+    let eitems = [];
+    let eitemsMap = new Map();
 
     // convert so always processing an array
-    if (result['@graph']) {
-      subjects = result['@graph'];
+    if (matchedNodes['@graph']) {
+      subjects = matchedNodes['@graph'];
     } else {
-      subjects = [result];
+      subjects = [matchedNodes];
     }
 
     serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'mapData2EncryptItems-Found-Subjects',
@@ -124,36 +128,27 @@ callbacks.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph
     // For each matched subject, find the object by its @id in the id2ObjectMap and pass
     // to routine to see if any fields need encrypting
     //
-    for (let i = 0; i < subjects[i]; i++) {
+    let conactEitemsMap = function conactEitemsMap(value, key) {
+      eitemsMap.set(key, value);
+    };
+
+    for (let i = 0; i < subjects.length; i++) {
       let object = id2ObjectMap.get(subjects[i]['@id']);
-      result.eitems = result.eitems.concat(
-        utils.processOneSubjectMapDataToEncryptItems(serviceCtx, object, schema, type, {}));
+      console.log('*** object', object);
+      let result = utils.processOneSubjectMapDataToEncryptItems(serviceCtx, object, schema, type, { msgId: props.msgId });
+      eitems = eitems.concat(result.eitems);
+      result.eitemsMap.forEach(conactEitemsMap);
     }
 
-    return callback(null, result);
+    return callback(null, { eitems: eitems, eitemsMap: eitemsMap });
   });
 
 };
 
-/*
-"properties": {
-  "@id":        { "type": "string" },
-  "@type":      { "type": "array" },
-  "https://schema.org/deathDate":                  { "type": "string" },
-  "https://schema.org/birthDate":                 { "type": "string" },
-  "https://schema.org/email":                     { "type": "string" },
-  "https://schema.org/telephone":                 { "type": "string" },
-  "https://schema.org/gender":                    { "type": "string" },
-  "https://schema.org/givenName":                 { "type": "string" },
-  "https://schema.org/familyName":                { "type": "string" },
-  "https://schema.org/additionalName":            { "type": "string" },
-  "https://schema.org/taxID":                     { "type": "string" },
-  "http://pn.schema.webshield.io/prop#taxID":     { "type": "string" },
-  "http://pn.schema.webshield.io/prop#sourceID":  { "type": "string" },
-  "http://schema.org/address": { "$ref": "#/definitions/https://schema.org/PostalAddress" }
-},
-
-*/
+//
+// Process one object using the schema to look for properties that need to be encrypted, returns an array of EItems and
+// a the metadata that is used map the result Eitems back into the object.
+//
 utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapDataToEncryptItems(serviceCtx, object, schema, type, props) {
   'use strict';
   assert(serviceCtx, 'processOneSubjectMapDataToEncryptItems - serviceCtx param missing');
@@ -169,6 +164,7 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
 
   let keys = Object.keys(schema.properties);
   let eitems = [];
+  let eitemsMap = new Map();
 
   for (let i = 0; i < keys.length; i++) {
 
@@ -210,6 +206,7 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
                           msgId: props.msgId, subject: object['@id'], key: key, keyDesc: keyDesc, }, loggingMD);
 
                 let eitem = eItemFactory.create(uuid(), type, JSONLDUtils.getV(object, key));
+                eitemsMap.set(eitem.id, { id: object['@id'], key: key }); // record info needed to set encrypted value in object
                 eitems.push(eitem);
               }
             }
@@ -220,10 +217,16 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
           let t = keyDesc.$ref;
           let k = t.replace('#/definitions/', '');
           let newSchema = schema.definitions[k];
-          eitems = eitems.concat(utils.processOneSubjectMapDataToEncryptItems(
-                          serviceCtx, object[key], newSchema, type, props));
+          let embeddedResult = utils.processOneSubjectMapDataToEncryptItems(
+                                            serviceCtx, object[key], newSchema, type, props);
 
-          //assert(false, 'processOneSubjectMapDataToEncryptItems - does not support $ref');
+          eitems = eitems.concat(embeddedResult.eitems); // conact result eitems with new eitems
+
+          // concat the eitem map to object one - not bad to embed function but for now ok as code cleaner
+          embeddedResult.eitemsMap.forEach(function (value, key1) {  // jshint ignore:line
+            // embed item has to include embed key
+            eitemsMap.set(key1, { id: object['@id'], embedKey: key, embed: value });
+          });
         } else {
           assert(false, util.format(
             'processOneSubjectMapDataToEncryptItems - Do not know how to process key:%s with desc: %j in schema to create eitems:%j',
@@ -233,7 +236,7 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
     }
   } // for
 
-  return eitems;
+  return { eitems: eitems, eitemsMap: eitemsMap };
 };
 
 module.exports = {
