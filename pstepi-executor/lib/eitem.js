@@ -56,7 +56,8 @@ function create(id, type, v, props) {
 function makeOVfromEitem(paiId, eitem) {
   'use strict';
 
-  // FIXME add code to make base64 so ok to store send.etc
+  // FIXME add code to determine if need to make bas64 and store accordingly
+  // as the code is bytes and storing makes sense to do.
 
   let ov = {}; // create obfuscated value from eitem
   ov[PN_P.v] = eitem.v; // base64

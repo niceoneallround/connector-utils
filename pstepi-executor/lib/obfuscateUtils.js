@@ -360,10 +360,10 @@ callbacks.createNodesBasedOnEitemMap = function createNodesBasedOnEitemMap(servi
                 msgId: props.msgId, privacyGraph: privacyGraph, pai: pai['@id'], }, loggingMD);
     }
 
+    let ov = eItemFactory.makeOVfromEitem(pai['@id'], eitems[i]);
     if (!mapValue.embedKey) {
 
       if (sourceNode[mapValue.key]) {
-        let ov = eItemFactory.makeOVfromEitem(pai['@id'], eitems[i]);
 
         if (Array.isArray(sourceNode[mapValue.key])) {
           assert(false, util.format('createNodesBasedOnEitemMap - Cannot handle array:%j', mapValue));
@@ -374,7 +374,30 @@ callbacks.createNodesBasedOnEitemMap = function createNodesBasedOnEitemMap(servi
         }
       } // key is in source node
     } else {
-      console.log('ADD CODE');
+      // embedded object of the form
+      // { id: object_d, embedKey: 'https://schema.org/address',
+      //         embed:{ id: embeded_object_id, key: 'https://schema.org/postaclCode' } }
+      let sourceEmbedNode = sourceNode[mapValue.embedKey];
+
+      assert((sourceEmbedNode['@id'] === mapValue.embed.id),
+                  util.format('Embbed node @id:%s does not match the mapVale.embed.id:%s for sourceNode:%s for mapValue:%j',
+                      sourceEmbedNode['@id'], mapValue.embed.id, sourceNode['@id'], mapValue));
+
+      if (!privacyGraph[mapValue.embedKey]) {
+        // need to create embed node
+        privacyGraph[mapValue.embedKey] = {
+          '@id': sourceEmbedNode['@id'],
+          '@type': sourceEmbedNode['@type'],
+        };
+      }
+
+      if (Array.isArray(sourceEmbedNode[mapValue.embed.key])) {
+        assert(false, util.format('createNodesBasedOnEitemMap - Cannot handle array:%j', mapValue));
+      } else if (sourceNode[mapValue.embed.key['@value']]) {
+        privacyGraph[mapValue.embedKey][mapValue.embed.key] = { '@type': sourceNode[mapValue.embed.key]['@type'], '@value': ov };
+      } else {
+        privacyGraph[mapValue.embedKey][mapValue.embed.key] = ov;
+      }
     }
 
   }

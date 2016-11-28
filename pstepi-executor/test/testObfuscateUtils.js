@@ -77,6 +77,7 @@ describe('OBFUSCATE - test obfuscate utils', function () {
           // should be address
           value.id.should.be.equal(alice['@id']);
           value.embedKey.should.be.equal(BASE_P.address);
+          value.embed.should.have.property('id', alice[BASE_P.address]['@id']);
           value.embed.key.should.be.equal(BASE_P.postalCode);
         } else {
           value.id.should.be.equal(alice['@id']);
@@ -120,12 +121,12 @@ describe('OBFUSCATE - test obfuscate utils', function () {
 
       return obfuscateUtils.promises.createNodesBasedOnEitemMap(serviceCtx, eitems, eitemsMap, sourceGraph, fakePai, { msgId: 'an-id' })
         .then(function (result) {
-          console.log('*** ZERO RESULT', result);
+          //console.log('*** ZERO RESULT', result);
           result.privacyGraphs.length.should.be.equal(0);
         });
     }); //it 3.1
 
-    it('3.2 should return a privacy graph for the node if any eitem for the node ', function () {
+    it('3.2 should return a privacy graph for the node if has a non embeded eitem for the node ', function () {
 
       let eitems = [{ id: 'ei1', type: 'pia-type', v: 'cipher' }];
       let eitemsMap = new Map();
@@ -133,7 +134,7 @@ describe('OBFUSCATE - test obfuscate utils', function () {
 
       return obfuscateUtils.promises.createNodesBasedOnEitemMap(serviceCtx, eitems, eitemsMap, sourceGraph, fakePai, { msgId: 'an-id' })
         .then(function (result) {
-          console.log('*** RESULT 3.2', result);
+          //console.log('*** RESULT 3.2', result);
           result.privacyGraphs.length.should.be.equal(1);
 
           let pg = result.privacyGraphs[0];
@@ -143,11 +144,87 @@ describe('OBFUSCATE - test obfuscate utils', function () {
 
           pg.should.have.property(BASE_P.givenName);
           let ov = pg[BASE_P.givenName];
-          console.log('****OV:%j', ov);
           ov.should.have.property(PN_P.v, 'cipher');
           ov.should.have.property('@type', fakePai['@id']);
         });
-    }); //it 3.1
+    }); //it 3.2
+
+    it('3.3 should return a privacy graph for the node if has an embeded eitem for the node ', function () {
+
+      let eitems = [{ id: 'ei1', type: 'encrypt-md-type', v: 'cipher' }];
+      let eitemsMap = new Map();
+      console.log('3.3 ALICE: %j', alice);
+      eitemsMap.set('ei1', { id: alice['@id'], embedKey: BASE_P.address,
+                              embed: { id: alice[BASE_P.address]['@id'], key: BASE_P.postalCode, }, });
+
+      return obfuscateUtils.promises.createNodesBasedOnEitemMap(serviceCtx, eitems, eitemsMap, sourceGraph, fakePai, { msgId: 'an-id' })
+        .then(function (result) {
+          console.log('*** RESULT 3.3', result);
+          result.privacyGraphs.length.should.be.equal(1);
+
+          let pg = result.privacyGraphs[0];
+          pg.should.have.property('@id', alice['@id']);
+          pg.should.have.property('@type');
+          JSONLDUtils.isType(pg, PN_T.PrivacyGraph).should.be.equal(true, 'not a privacy graph');
+
+          pg.should.have.property(BASE_P.address);
+          pg[BASE_P.address].should.have.property(BASE_P.postalCode);
+          pg[BASE_P.address][BASE_P.postalCode].should.have.property('@type', fakePai['@id']);
+          pg[BASE_P.address][BASE_P.postalCode].should.have.property(PN_P.v, 'cipher');
+        });
+    }); //it 3.3
+
+    it('3.4 should return a privacy graph for the node if has a multipe eitems for node', function () {
+
+      let eitems = [
+          { id: 'ei1', type: 'encrypt-md-type', v: 'cipher1', },
+          { id: 'ei2', type: 'encrypt-md-type', v: 'cipher2', },
+        ];
+      let eitemsMap = new Map();
+      eitemsMap.set('ei1', { id: alice['@id'], key: BASE_P.givenName });
+      eitemsMap.set('ei2', { id: alice['@id'], embedKey: BASE_P.address,
+                              embed: { id: alice[BASE_P.address]['@id'], key: BASE_P.postalCode, }, });
+
+      return obfuscateUtils.promises.createNodesBasedOnEitemMap(serviceCtx, eitems, eitemsMap, sourceGraph, fakePai, { msgId: 'an-id' })
+        .then(function (result) {
+          //console.log('*** RESULT 3.4', result);
+          result.privacyGraphs.length.should.be.equal(1);
+
+          let pg = result.privacyGraphs[0];
+          pg.should.have.property('@id', alice['@id']);
+          pg.should.have.property('@type');
+          JSONLDUtils.isType(pg, PN_T.PrivacyGraph).should.be.equal(true, 'not a privacy graph');
+
+          pg.should.have.property(BASE_P.givenName);
+          let ov = pg[BASE_P.givenName];
+          ov.should.have.property(PN_P.v, 'cipher1');
+          ov.should.have.property('@type', fakePai['@id']);
+
+          pg.should.have.property(BASE_P.address);
+          pg[BASE_P.address].should.have.property(BASE_P.postalCode);
+          pg[BASE_P.address][BASE_P.postalCode].should.have.property('@type', fakePai['@id']);
+          pg[BASE_P.address][BASE_P.postalCode].should.have.property(PN_P.v, 'cipher2');
+        });
+    }); //it 3.4
+
+    it('3.5 should return a privacy graph for each source node if pass more than one source node and eitems for them', function () {
+
+      let eitems = [
+        { id: 'ei1', type: 'encrypt-md-type', v: 'cipher', },
+        { id: 'ei2', type: 'encrypt-md-type', v: 'cipher', },
+      ];
+      let eitemsMap = new Map();
+      eitemsMap.set('ei1', { id: alice['@id'], key: BASE_P.givenName });
+      eitemsMap.set('ei2', { id: bob['@id'], key: BASE_P.givenName });
+
+      return obfuscateUtils.promises.createNodesBasedOnEitemMap(serviceCtx, eitems, eitemsMap, sourceGraph, fakePai, { msgId: 'an-id' })
+        .then(function (result) {
+          console.log('*** RESULT 3.5', result);
+          result.privacyGraphs.length.should.be.equal(2);
+          result.privacyGraphs[0]['@id'].should.not.be.equal(result.privacyGraphs[1]['@id']);
+        });
+    }); //it 3.5
+
   }); // describe 3
 
 }); // describe
