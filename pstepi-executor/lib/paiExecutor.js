@@ -2,6 +2,7 @@
 
 const assert = require('assert');
 const JSONLDUtils = require('jsonld-utils/lib/jldUtils').npUtils;
+const obfuscateUtils = require('./obfuscateUtils');
 const PNDataModel = require('data-models/lib/PNDataModel');
 const PN_P = PNDataModel.PROPERTY;
 
@@ -32,6 +33,7 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
   assert(props, 'paction-execute: props param is missing');
   assert(props.graph, 'paction-execute: props.graph missing');
   assert(props.pai, 'paction-execute: props.pai privacy action instance missing');
+  assert(props.msgId, 'paction-execute: props.msgId missing');
 
   //
   // Uses the privacy action instance JSON schema to process the graph looking
@@ -39,10 +41,10 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
   // items that can be sent to the obfuscation service
   //
 
-  let schema = JSONLDUtils.getO(props.pai, PN_P.schema);
-  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PAI-Executor-Using-JSON-Schema-on-Data',
+  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PAI-Executor-Using-Privacy-Action-Instance',
+                                      msgId: props.msgId,
                                       pai: props.pai['@id'],
-                                      metadata: schema, }, loggingMD);
+                                      metadata: props.pai, }, loggingMD);
 
   let data;
   if (props.graph['@graph']) {
@@ -52,10 +54,37 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
   }
 
   serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PAI-Executor-Using-Data',
+                                      msgId: props.msgId,
                                       pai: props.pai['@id'],
                                       data: data, }, loggingMD);
 
-  return callback(null, null);
+  //
+  // Process the input data to generate the set of eitems that will need to be
+  // passed to the obfuscation service. Note for now always encryption hence eitems
+  //
+  let schema = JSONLDUtils.getO(props.pai, PN_P.schema);
+
+  //
+  // Create the set of eitems that need to be passed to the obfuscation service
+  //
+  return obfuscateUtils.promises.mapData2EncryptItems(serviceCtx, data, schema, props.pai, props)
+    .then(function (result) {
+      console.log(result);
+      return callback(null, null);
+
+      //
+      // call the obfuscation service
+      //
+
+      //
+      // create the privacy graphs based on the results from the obfuscation service
+      // note these only contain nodes that should be obfuscated
+      //
+
+      //
+      // return the privacy graphs
+      //
+    });
 };
 
 module.exports = {

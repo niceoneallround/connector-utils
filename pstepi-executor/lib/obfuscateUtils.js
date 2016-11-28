@@ -3,7 +3,10 @@
 const assert = require('assert');
 const eItemFactory = require('./eitem');
 const JSONLDPromises = require('jsonld-utils/lib/jldUtils').promises;
-const JSONLDUtils = require('jsonld-utils/lib/jldUtils').npUtils;
+const JSONLDUtilsnp = require('jsonld-utils/lib/jldUtils').npUtils;
+const JSONLDUtils = require('jsonld-utils/lib/jldUtils');
+const PNDataModel = require('data-models/lib/PNDataModel');
+const PN_T = PNDataModel.TYPE;
 const util = require('util');
 const uuid = require('uuid');
 
@@ -13,13 +16,16 @@ const loggingMD = {
 
 let promises = {};
 let callbacks = {};
-let utils = {}; // expsose to support testing
+let utils = {}; // expose to support testing
+
+//---------------------------------------------
 
 //
 // mapData2EncryptItems
 //
-// Process the input graph looking for fields that need to be encrypted and if
-// found create an encrypt item for them, returning an array of encrypt items.
+// Process the input graph looking for nodes and fields that need to be encrypted and if
+// found create an encrypt item for them, returning an array of encrypt items, and a structure
+// that enables the encrypted items to be placed back into the object.
 //
 // Assumptions
 //  1. Input data is an array of subjects
@@ -52,14 +58,20 @@ let utils = {}; // expsose to support testing
 //
 // Returns the following
 //  - array of encrypt item
-//  - map
-//     - non embedded prop < encrypt_item_id, { id: <object id>, key: <property name }
-//     - embed prop { id: <object id>, embedKey: <embed key name>, embed: { id: <embed object id>, key: <embed property name }}>
+//  - map of the form <key: eitem.id, value: mapValue> mapValue contains the following
+//     - non embedded field the mapValue contains
+//          { id: <object id>, key: <property name }
+//     - embed object teh mapValue contains
+//          { id: <object id>, embedKey: <embed key name>, embed: { id: <embed object id>, key: <embed property name }}>
 //
-promises.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph, schema, type, props) {
+//  Example embedded mapValue
+//    { id: object_d, embedKey: 'https://schema.org/address',
+//         embed:{ id: embeded_object_id, key: 'https://schema.org/postaclCode' } }
+//
+promises.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph, schema, pai, props) {
   'use strict';
   return new Promise(function (resolve, reject) {
-    callbacks.mapData2EncryptItems(serviceCtx, graph, schema, type, props, function (err, result) {
+    callbacks.mapData2EncryptItems(serviceCtx, graph, schema, pai, props, function (err, result) {
       if (err) {
         reject(err);
       } else {
@@ -69,12 +81,12 @@ promises.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph,
   });
 };
 
-callbacks.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph, schema, type, props, callback) {
+callbacks.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph, schema, pai, props, callback) {
   'use strict';
   assert(serviceCtx, 'mapData2EncryptItems - serviceCtx param missing');
   assert(graph, 'mapData2EncryptItems - data param missing');
   assert(schema, 'mapData2EncryptItems - schema param missing');
-  assert(type, 'mapData2EncryptItems - type param missing');
+  assert(pai, 'mapData2EncryptItems - type param missing');
   assert(props, 'mapData2EncryptItems - props param missing');
   assert(props.msgId, 'mapData2EncryptItems - props.msgId param missing');
 
@@ -83,7 +95,7 @@ callbacks.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph
   assert(schema.properties, util.format('No properties in json schema:%j', schema));
 
   serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'mapData2EncryptItems-Looking-4-Subjects',
-            msgId: props.msgId, type: schema.title, data: graph, }, loggingMD);
+            msgId: props.msgId, type: schema.title, data: graph, pai: pai['@id'], }, loggingMD);
 
   let result = {};
   result.eitems = [];
@@ -122,7 +134,7 @@ callbacks.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph
     }
 
     serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'mapData2EncryptItems-Found-Subjects',
-              msgId: props.msgId, type: schema.title, data: subjects, }, loggingMD);
+              msgId: props.msgId, type: schema.title, data: subjects, pai: pai['@id'], }, loggingMD);
 
     //
     // For each matched subject, find the object by its @id in the id2ObjectMap and pass
@@ -135,7 +147,7 @@ callbacks.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph
     for (let i = 0; i < subjects.length; i++) {
       let object = id2ObjectMap.get(subjects[i]['@id']);
       console.log('*** object', object);
-      let result = utils.processOneSubjectMapDataToEncryptItems(serviceCtx, object, schema, type, { msgId: props.msgId });
+      let result = utils.processOneSubjectMapDataToEncryptItems(serviceCtx, object, schema, pai, { msgId: props.msgId });
       eitems = eitems.concat(result.eitems);
       result.eitemsMap.forEach(conactEitemsMap);
     }
@@ -149,12 +161,12 @@ callbacks.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph
 // Process one object using the schema to look for properties that need to be encrypted, returns an array of EItems and
 // a the metadata that is used map the result Eitems back into the object.
 //
-utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapDataToEncryptItems(serviceCtx, object, schema, type, props) {
+utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapDataToEncryptItems(serviceCtx, object, schema, pai, props) {
   'use strict';
   assert(serviceCtx, 'processOneSubjectMapDataToEncryptItems - serviceCtx param missing');
   assert(object, 'processOneSubjectMapDataToEncryptItems - object param missing');
   assert(schema, 'processOneSubjectMapDataToEncryptItems - schema param missing');
-  assert(type, 'processOneSubjectMapDataToEncryptItems- type param missing');
+  assert(pai, 'processOneSubjectMapDataToEncryptItems- pai param missing');
   assert(props, 'processOneSubjectMapDataToEncryptItems - props param missing');
   assert(props.msgId, 'processOneSubjectMapDataToEncryptItems- props.msgId param missing');
 
@@ -203,9 +215,10 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
               if (object[key]) {
                 serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
                           action: 'processOneSubjectMapDataToEncryptItems-Create-EITEM',
-                          msgId: props.msgId, subject: object['@id'], key: key, keyDesc: keyDesc, }, loggingMD);
+                          msgId: props.msgId, subject: object['@id'], key: key, keyDesc: keyDesc,
+                          pai: pai['@id'], }, loggingMD);
 
-                let eitem = eItemFactory.create(uuid(), type, JSONLDUtils.getV(object, key));
+                let eitem = eItemFactory.create(uuid(), pai['@id'], JSONLDUtilsnp.getV(object, key));
                 eitemsMap.set(eitem.id, { id: object['@id'], key: key }); // record info needed to set encrypted value in object
                 eitems.push(eitem);
               }
@@ -218,7 +231,7 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
           let k = t.replace('#/definitions/', '');
           let newSchema = schema.definitions[k];
           let embeddedResult = utils.processOneSubjectMapDataToEncryptItems(
-                                            serviceCtx, object[key], newSchema, type, props);
+                                            serviceCtx, object[key], newSchema, pai, props);
 
           eitems = eitems.concat(embeddedResult.eitems); // conact result eitems with new eitems
 
@@ -237,6 +250,137 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
   } // for
 
   return { eitems: eitems, eitemsMap: eitemsMap };
+};
+
+//
+// createNodesBasedOnEitemMap
+//
+// Creates new nodes with just the fields that are in the passed eitems maps. The
+// eitems map contains the node @id and any fields of that node that have either
+// been obfuscated or de-obfuscated.
+//
+// Assumptions
+//  1. SourceGraph is an array of subjects so no need to flatten to find
+//
+// Performs the following
+//
+// Create an the output nodes with just an @id and @type as follows
+// 1. For each source node that has a type that matches the obfuscation schema type perform the following
+// 1.1 create a new node
+// 1.2 Copy across the @id
+// 1.3 Copy across the @type
+// 1.4 if obfuscate add pn_t.PrivacyNode to the @type
+//
+// For each node in the encrypyed fields map peform the following
+// 1. Find the node by @id in the output nodes map
+// 2. If !mapValue.embedKey
+// 2.1 If the sourceNode[mapValue.key] is a scalar
+// 2.1.1 if the sourceNode[mapValue.key] is an object or value set property to eitem
+// 2.1.2 if the sourceNode[mapValue.key] is an array barf FIXME
+// 2.1.3 if the sourceNode[mapValue.key] is an expanded @value then copy @type from source node value, and set @value to eitem
+// 3. if mapValue.embedKey // this is a mapValue.mapValue case
+// 3.1 if !newObject[mapValue.embedKey]
+// 3.1.1 newObject[mapValue.embedKey] = new object with copied @id and the @type from the sourceObject[mapValue.embedKey]
+// 3.2.2 if mapValue.MapValue.embedKey barf FIXME cannot handle embedded object in embedded object
+// 3.2.3 if the sourceNode[mapValue.mapValue.key] is a scalar
+// 2.2.3.1 if the sourceNode[mapValue.mapValue.key] is an object or value set property to eitem
+// 2.2.3.2 if the sourceNode[mapValue.mapValue.key] is an array barf FIXME
+// 2.2.3.3 if the sourceNode[mapValue.mapValue.keyM] is an expanded @value barf FIXME
+//
+promises.createNodesBasedOnEitemMap = function createNodesBasedOnEitemMap(serviceCtx, eitems, eitemsMap, sourceGraph, pai, props) {
+  'use strict';
+  return new Promise(function (resolve, reject) {
+    callbacks.createNodesBasedOnEitemMap(serviceCtx, eitems, eitemsMap, sourceGraph, pai, props, function (err, result) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+};
+
+callbacks.createNodesBasedOnEitemMap = function createNodesBasedOnEitemMap(serviceCtx, eitems, eitemsMap, sourceGraph, pai, props, callback) {
+  'use strict';
+
+  assert(serviceCtx, 'createNodesBasedOnEitemMap - serviceCtx param missing');
+  assert(eitems, 'createNodesBasedOnEitemMap - eitems param missing');
+  assert(eitemsMap, 'createNodesBasedOnEitemMap - eitemsMap param missing');
+  assert(sourceGraph, 'createNodesBasedOnEitemMap - sourceGraph param missing');
+  assert(pai, 'createNodesBasedOnEitemMap - pai param missing');
+  assert(props, 'createNodesBasedOnEitemMap - props param missing');
+  assert(props.msgId, 'createNodesBasedOnEitemMap - props.msgId param missing');
+
+  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'createNodesBasedOnEitemMap-START',
+            msgId: props.msgId, eitemsLength: eitems.length, pai: pai['@id'], }, loggingMD);
+
+  //
+  // Create a map of @id to subjects in source graph - first map to an array as easier to process
+  //
+  let t;
+  if (sourceGraph['@graph']) {
+    t = sourceGraph['@graph'];
+  } else if (Array.isArray(sourceGraph)) {
+    t = sourceGraph;
+  } else {
+    t = [sourceGraph];
+  }
+
+  let sourceOM = new Map();
+  for (let i = 0; i < t.length; i++) {
+    sourceOM.set(t[i]['@id'], t[i]);
+  }
+
+  let privacyGraphs = [];
+  let privacyGraphMap = new Map();
+
+  //
+  // process the array of items as described above
+  //
+  for (let i = 0; i < eitems.length; i++) {
+
+    // find map value
+    let mapValue = eitemsMap.get(eitems[i].id);
+    assert(mapValue, util.format('NO MapValue for items:%i in map:%j', eitems[i].id, eitemsMap));
+
+    // find source node for result eitem
+    let sourceNode = sourceOM.get(mapValue.id);
+    assert(sourceNode, util.format('No Source Node for @id:%s in MapValue:%j for items:%s', mapValue.id, mapValue, eitems[i].id));
+
+    // find the privacy graph that creating from this source Node and items
+    let privacyGraph = privacyGraphMap.get(sourceNode['@id']);
+
+    // if no privacy graph create one and add to set of pgs
+    if (!privacyGraph) {
+      privacyGraph = { '@id': sourceNode['@id'], '@type': sourceNode['@type'] };
+      JSONLDUtils.addType2Node(privacyGraph, PN_T.PrivacyGraph);
+      privacyGraphs.push(privacyGraph);
+      privacyGraphMap.set(privacyGraph['@id'], privacyGraph);
+      serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'createNodesBasedOnEitemMap-CREATE-PRIVACY-GRAPH',
+                msgId: props.msgId, privacyGraph: privacyGraph, pai: pai['@id'], }, loggingMD);
+    }
+
+    if (!mapValue.embedKey) {
+
+      if (sourceNode[mapValue.key]) {
+        let ov = eItemFactory.makeOVfromEitem(pai['@id'], eitems[i]);
+
+        if (Array.isArray(sourceNode[mapValue.key])) {
+          assert(false, util.format('createNodesBasedOnEitemMap - Cannot handle array:%j', mapValue));
+        } else if (sourceNode[mapValue.key['@value']]) {
+          privacyGraph[mapValue.key] = { '@type': sourceNode[mapValue.key]['@type'], '@value': ov };
+        } else {
+          privacyGraph[mapValue.key] = ov;
+        }
+      } // key is in source node
+    } else {
+      console.log('ADD CODE');
+    }
+
+  }
+
+  return callback(null, { privacyGraphs: privacyGraphs });
+
 };
 
 module.exports = {

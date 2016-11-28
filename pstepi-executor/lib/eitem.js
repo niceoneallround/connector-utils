@@ -1,6 +1,8 @@
 /*jslint node: true, vars: true */
 
 const assert = require('assert');
+const PNDataModel = require('data-models/lib/PNDataModel');
+const PN_P = PNDataModel.PROPERTY;
 
 /*
 
@@ -47,6 +49,23 @@ function create(id, type, v, props) {
   return new Eitem(id, type, v, props);
 }
 
+//
+// create an obfuscated value from an eitem - see the privacy metadata for more information
+// *paiId - the @id of the privacy action instance used to create obfuscated value
+// eitem
+function makeOVfromEitem(paiId, eitem) {
+  'use strict';
+
+  // FIXME add code to make base64 so ok to store send.etc
+
+  let ov = {}; // create obfuscated value from eitem
+  ov[PN_P.v] = eitem.v; // base64
+  ov['@type'] = paiId;
+
+  return ov;
+}
+
 module.exports = {
   create: create,
+  makeOVfromEitem: makeOVfromEitem,
 };

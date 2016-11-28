@@ -41,7 +41,7 @@ describe('PAI Test Privacy Action Instance Executor', function () {
 
       let pai = PAIUtils.YAML2Node(paiYAML, props);
 
-      props = { graph: graph, pai: pai };
+      props = { graph: graph, pai: pai, msgId: '1' };
       return paiExecutor.promises.execute(serviceCtx, props)
         .then(function (result) {
           console.log(result);

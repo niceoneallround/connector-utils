@@ -1,10 +1,11 @@
 {
   "name": "connector-utils",
   "version": "0.3.1",
-  "description": "Utis used by all connectors",
+  "description": "Utils used by all connectors and privacy agents",
   "main": "index.js",
   "scripts": {
-    "test": "npm run test"
+    "test": "gulp test",
+    "build": "gulp test"
   },
   "repository": {
     "type": "git",
