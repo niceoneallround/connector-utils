@@ -70,7 +70,6 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
   return obfuscateUtils.promises.mapData2EncryptItems(serviceCtx, data, schema, props.pai, props)
     .then(function (result) {
       console.log(result);
-      return callback(null, null);
 
       //
       // call the obfuscation service
@@ -84,6 +83,7 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
       //
       // return the privacy graphs
       //
+      return callback(null, null);
     });
 };
 
