@@ -119,8 +119,8 @@ function commonVerifyValid(c, cf) {
   c.crypto.should.have.property('jwt');
   c.crypto.jwt.should.have.property('issuer', cf.DOMAIN_NAME);
   c.crypto.jwt.should.have.property('type', cf.jwt.signer.alg);
-  c.crypto.jwt.should.have.property('x509Cert', '3\n');
-  c.crypto.jwt.should.have.property('publicKey', '4\n');
+  c.crypto.jwt.should.have.property('x509CertPEM', '3\n');
+  c.crypto.jwt.should.have.property('publicKeyPEM', '4\n');
   c.crypto.jwt.should.have.property('secret', '5\n');
   c.should.have.property('VERIFY_JWT', true);
 }

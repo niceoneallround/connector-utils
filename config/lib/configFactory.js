@@ -196,14 +196,14 @@ function create(config) {
       c.crypto.jwt.type = 'RS256';
 
       // the certficate file
-      let x509Cert = readfile(signer.RS256.certificate_file);
-      assert(x509Cert, util.format('No certificate_file configure signing JWTs:%j', config));
-      c.crypto.jwt.x509Cert = x509Cert;
+      let x509CertPEM = readfile(signer.RS256.certificate_file);
+      assert(x509CertPEM, util.format('No certificate_file configure signing JWTs:%j', config));
+      c.crypto.jwt.x509CertPEM = x509CertPEM;
 
       // the public key file
-      let publicKey = readfile(signer.RS256.public_key_file);
-      assert(publicKey, util.format('No public_key_file configure signing JWTs:%j', config));
-      c.crypto.jwt.publicKey = publicKey;
+      let publicKeyPEM = readfile(signer.RS256.public_key_file);
+      assert(publicKeyPEM, util.format('No public_key_file configure signing JWTs:%j', config));
+      c.crypto.jwt.publicKeyPEM = publicKeyPEM;
 
       // the rsa private key
       let rsaPrivateKey = readfile(signer.RS256.private_key_file);
