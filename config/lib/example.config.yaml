@@ -36,6 +36,8 @@ service-name: # data-connector,
         public_key_file: #the public key pem file - openssl rsa -in rsa-private.pem -pubout > rsa-public.pem
         private_key_file: #the private key pem file - openssl genrsa 2048 > rsa-private.pem
       #HS256:
-        #secret: 'the secret to use for signing if using hs256 - shoud only use for testing, can be overridden by JWT_SECRET'
+        #secret: 'the secret to use for signing if using hs256 - should only use for testing, can be overridden by JWT_SECRET'
     verifier:
       enabled: true # can be overridden by JWT_VERFIY
+      HS256:
+        secret: #supports old code where other parties are signing with HS256 while this service is signing with R2256

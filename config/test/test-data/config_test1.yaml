@@ -34,3 +34,5 @@ service_1:
         private_key_file: '../test/test-data/file5'
     verifier:
       enabled: true
+      HS256:
+        secret: 'yes'

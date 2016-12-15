@@ -45,6 +45,9 @@ function createCanonConfigFile() {
         },
         verifier: {
           enabled: true,
+          HS256: {
+            secret: 'yes',
+          },
         },
       },
     },
@@ -121,6 +124,7 @@ function commonVerifyValid(c, cf) {
   c.crypto.jwt.should.have.property('type', cf.jwt.signer.alg);
   c.crypto.jwt.should.have.property('x509CertPEM', '3\n');
   c.crypto.jwt.should.have.property('publicKeyPEM', '4\n');
-  c.crypto.jwt.should.have.property('secret', '5\n');
+  c.crypto.jwt.should.have.property('privateKey', '5\n');
+  c.crypto.jwt.should.have.property('secret', 'yes');
   c.should.have.property('VERIFY_JWT', true);
 }

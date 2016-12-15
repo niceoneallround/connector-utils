@@ -118,7 +118,7 @@ function createDomain(serviceCtx, domain, callback) {
     }
 
     switch (response.statusCode) {
-      case HttpStatus.OK:
+      case HttpStatus.OK: {
         let verified = JWTUtils.newVerify(response.body, serviceCtx.config.crypto.jwt);
         let fetchedDomain = JWTUtils.getPnGraph(verified);
 
@@ -138,12 +138,15 @@ function createDomain(serviceCtx, domain, callback) {
         }
 
         break;
-      case HttpStatus.NOT_FOUND:
+      }
+
+      case HttpStatus.NOT_FOUND: {
         serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
                               action: 'From-File-Create-Domain-DID-NOT-FIND-Domain',
                               domainId: domainId,
                               name: domain.name, }, loggingMD);
         break;
+      }
 
       default:
         assert(false, util.format('Unexpected status fetching Domain code:%s', response.statusCode));
@@ -173,14 +176,16 @@ function createDomain(serviceCtx, domain, callback) {
 
       let verified;
       switch (response.statusCode) {
-        case HttpStatus.OK:
+        case HttpStatus.OK: {
           verified = JWTUtils.newVerify(response.body, serviceCtx.config.crypto.jwt);
           let newDomainR = JWTUtils.getPnGraph(verified);
           serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'From-File-Create-Domain-CREATE-SUCCESS',
                                   metadata: newDomainR, }, loggingMD);
 
           return callback(null, newDomainR); // ALL OK :)
-        case HttpStatus.BAD_REQUEST:
+        }
+
+        case HttpStatus.BAD_REQUEST: {
           verified = JWTUtils.newVerify(response.body, serviceCtx.config.crypto.jwt);
           let error = JWTUtils.getPnGraph(verified);
           serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
@@ -188,6 +193,8 @@ function createDomain(serviceCtx, domain, callback) {
                                   domainReq: domainReq,
                                   error: error, }, loggingMD);
           return callback(error, null);
+        }
+
         default:
           assert(false, util.format('create domain Unexpected status code:%s', response.statusCode));
           return callback(util.format('create domain Unexpected status code:%s', response.statusCode), null);
