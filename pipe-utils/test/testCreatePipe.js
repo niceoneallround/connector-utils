@@ -5,8 +5,6 @@ const PPCanons = require('metadata/lib/privacyPipe').canons;
 const HttpStatus = require('http-status');
 const JWTUtils = require('jwt-utils/lib/jwtUtils').jwtUtils;
 const nock = require('nock');
-
-//const PNDataModel = require('data-models/lib/PNDataModel');
 const should = require('should');
 const testUtils = require('node-utils/testing-utils/lib/utils');
 const util = require('util');
