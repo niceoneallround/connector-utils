@@ -1,5 +1,6 @@
 /*jslint node: true, vars: true */
 const v2Encrypt = require('../lib/v2Encrypt');
+const PNOVUtils = require('data-models/lib/PNObfuscatedValue').utils;
 const should = require('should');
 const testUtils = require('node-utils/testing-utils/lib/utils');
 
@@ -23,9 +24,13 @@ describe('YES v2Encrypt - tests', function () {
   describe('1 execute', function () {
 
     it('1.1 should return a promise', function () {
-      let promiseResult = v2Encrypt.execute(dummyServiceCtx, {}, {});
+      let items = [];
+      items.push(PNOVUtils.createOItem('id1', 'type1', 'value1'));
+      items.push(PNOVUtils.createOItem('id2', 'type2', 'value2'));
+      let promiseResult = v2Encrypt.execute(dummyServiceCtx, items, {});
       return promiseResult.then(function (result) {
-        result.should.equal('a');
+        result.length.should.equal(2);
+        result[0].should.have.property('v', 'cipher-0');
       });
     }); //it 1.1
   }); // describe 1

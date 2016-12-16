@@ -1,8 +1,13 @@
 /*jslint node: true, vars: true */
+const assert = require('assert');
 const BaseSubjectPNDataModel = require('data-models/lib/BaseSubjectPNDataModel');
+const JSONLDUtils = require('jsonld-utils/lib/jldUtils').npUtils;
 const paiExecutor = require('../lib/paiExecutor');
 const PAIUtils = require('metadata/lib/PrivacyActionInstance').utils;
+const PNDataModel = require('data-models/lib/PNDataModel');
+const PN_T = PNDataModel.TYPE;
 const testUtils = require('node-utils/testing-utils/lib/utils');
+const util = require('util');
 
 describe('PAI Test Privacy Action Instance Executor', function () {
   'use strict';
@@ -17,9 +22,9 @@ describe('PAI Test Privacy Action Instance Executor', function () {
     });
   });
 
-  describe('1 Start Developing', function () {
+  describe('1 Ensure can obfuscate data to a privacy graph - note lower levels check results so do not repeat', function () {
 
-    it('1.1 Validate that selects correct properties from JSON data', function () {
+    it('1.1 Obfuscate alice and bob should produce privacy graphs of there information', function () {
 
       let schema = BaseSubjectPNDataModel.model.JSON_SCHEMA;
       let graph = { '@graph': [
@@ -44,7 +49,15 @@ describe('PAI Test Privacy Action Instance Executor', function () {
       props = { graph: graph, pai: pai, msgId: '1' };
       return paiExecutor.promises.execute(serviceCtx, props)
         .then(function (result) {
-          console.log(result);
+          let pgs = result['@graph'];
+          pgs.length.should.be.equal(2);
+
+          for (let i = 0; i < pgs.length; i++) {
+            let pg = pgs[i];
+
+            //console.log(pg);
+            assert(JSONLDUtils.isType(pg, PN_T.PrivacyGraph), util.format('Expected type Privacy Graph:%j', pg));
+          }
         });
 
     }); //it 1.1

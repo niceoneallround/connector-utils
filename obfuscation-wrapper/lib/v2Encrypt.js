@@ -73,7 +73,7 @@ let utils = {};
 
 //
 // serviceCtx
-// items an array of { id: id to return, value: value to obfuscate }
+// items an array of OItems
 // props.os - the obfuscation service resource
 // props.kms - the kms service resource
 // props.cekm - content encrypt key metadata
@@ -88,28 +88,19 @@ utils.execute = function execute(serviceCtx, items, props) {
   assert(items, 'execute - items param missing');
   assert(props, 'execute - props param missing');
 
-  //
-  // for now just create a canon response, so can hook up and test
-  // add actual code later
-  //
-
-  let response = {};
-  response.id = 'fake_id';
-  response.type = 'EncryptResponse';
-  response.items = [];
-
-  for (let i = 0; i < items.length; i++) {
-    response.items.push({
-      id: items['@id'],
-      type: items['@type'],
-      value: 'obfuscatedValue',
-    });
-  }
-
   // expand and compact using JSON-LD context
 
   return new Promise(function (resolve) {
-    resolve('a');
+
+    //
+    // for now just create a canon response, so can hook up and test
+    // add actual code later
+    //
+    for (let i = 0; i < items.length; i++) {
+      items[i].v = 'cipher-' + i;
+    }
+
+    resolve(items);
   });
 };
 

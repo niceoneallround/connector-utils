@@ -213,7 +213,7 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
               //
               if (object[key]) {
                 serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
-                          action: 'processOneSubjectMapDataToEncryptItems-Create-EITEM',
+                          action: 'processOneSubjectMapDataToEncryptItems-Create-OItem',
                           msgId: props.msgId, subject: object['@id'], key: key, keyDesc: keyDesc,
                           pai: pai['@id'], }, loggingMD);
 

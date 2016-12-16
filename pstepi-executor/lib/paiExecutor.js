@@ -5,6 +5,7 @@ const JSONLDUtils = require('jsonld-utils/lib/jldUtils').npUtils;
 const obfuscateUtils = require('./obfuscateUtils');
 const PNDataModel = require('data-models/lib/PNDataModel');
 const PN_P = PNDataModel.PROPERTY;
+const v2Encrypt = require('../../obfuscation-wrapper/lib/v2Encrypt');
 
 const loggingMD = {
         ServiceType: 'connector-utils/pstepi-executor',
@@ -12,6 +13,13 @@ const loggingMD = {
 
 let promises = {};
 let callbacks = {};
+
+/*
+
+If an obfuscate operation then returns an array of privacy graphs, one for each source graph passed in
+see step executor for explaination
+
+*/
 
 // props.graph - can be either a { @graph: []}, or a single object {}
 promises.execute = function promiseExecute(serviceCtx, props) {
@@ -34,6 +42,8 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
   assert(props.graph, 'paction-execute: props.graph missing');
   assert(props.pai, 'paction-execute: props.pai privacy action instance missing');
   assert(props.msgId, 'paction-execute: props.msgId missing');
+
+  let rCtx = {};
 
   //
   // Uses the privacy action instance JSON schema to process the graph looking
@@ -67,23 +77,38 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
   //
   // Create the set of eitems that need to be passed to the obfuscation service
   //
-  return obfuscateUtils.promises.mapData2EncryptItems(serviceCtx, data, schema, props.pai, props)
-    .then(function (result) {
-      console.log(result);
+  let promiseItems2Obfuscate = obfuscateUtils.promises.mapData2EncryptItems(serviceCtx, data, schema, props.pai, props);
+
+  // obfuscate the items
+  let promiseObfuscatedItems = promiseItems2Obfuscate
+    .then(function (makeItemsResult) {
+
+      rCtx.makeItemsResult = makeItemsResult;
 
       //
-      // call the obfuscation service
+      // call the obfuscation service -
+      // for now hardcoded to call v2 and pass none of required params only so ca get up and runnung
       //
+      return v2Encrypt.execute(serviceCtx, rCtx.makeItemsResult.eitems, {});
+    });
 
+  let promisePrivacyGraphs = promiseObfuscatedItems
+    .then(function (encryptedOitems) {
       //
       // create the privacy graphs based on the results from the obfuscation service
       // note these only contain nodes that should be obfuscated
       //
+      return obfuscateUtils.promises.createNodesBasedOnEitemMap(
+                serviceCtx, encryptedOitems,
+                rCtx.makeItemsResult.eitemsMap, data, props.pai, props);
+    });
 
-      //
-      // return the privacy graphs
-      //
-      return callback(null, null);
+  // return the privacy graphs
+  promisePrivacyGraphs
+    .then(function (privacyGraphs) {
+
+      return callback(null, { '@graph': privacyGraphs.privacyGraphs });
+
     });
 };
 
