@@ -4,14 +4,13 @@ const assert = require('assert');
 const PNDataModel = require('data-models/lib/PNDataModel');
 const PN_P = PNDataModel.PROPERTY;
 
-/*
-
-Describes an encrypt item that is passed to the encryption service contains
-the following fields
-
-*/
-
 class Eitem {
+
+  //For each value that needs to be obfuscated this captures the following information
+  // id: used to track back and forth across the call to the obfuscation service
+  // v: the value to obfuscate - no data conversion
+  // props.n: optional nonce
+  // props.aad: optional aad
   constructor(id, type, v, props) {
 
     assert(id, 'EItem - id param missing');

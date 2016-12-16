@@ -1,12 +1,12 @@
 /*jslint node: true, vars: true */
 
 const assert = require('assert');
-const eItemFactory = require('./eitem');
 const JSONLDPromises = require('jsonld-utils/lib/jldUtils').promises;
 const JSONLDUtilsnp = require('jsonld-utils/lib/jldUtils').npUtils;
 const JSONLDUtils = require('jsonld-utils/lib/jldUtils');
 const PNDataModel = require('data-models/lib/PNDataModel');
 const PN_T = PNDataModel.TYPE;
+const PNOVUtils = require('data-models/lib/PNObfuscatedValue').utils;
 const util = require('util');
 const uuid = require('uuid');
 
@@ -23,7 +23,7 @@ let utils = {}; // expose to support testing
 //
 // mapData2EncryptItems
 //
-// Process the input graph looking for nodes and fields that need to be encrypted and if
+// Process the input graph looking for nodes and fields that need to be obfuscated and if
 // found create an encrypt item for them, returning an array of encrypt items, and a structure
 // that enables the encrypted items to be placed back into the object.
 //
@@ -146,7 +146,6 @@ callbacks.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph
 
     for (let i = 0; i < subjects.length; i++) {
       let object = id2ObjectMap.get(subjects[i]['@id']);
-      console.log('*** object', object);
       let result = utils.processOneSubjectMapDataToEncryptItems(serviceCtx, object, schema, pai, { msgId: props.msgId });
       eitems = eitems.concat(result.eitems);
       result.eitemsMap.forEach(conactEitemsMap);
@@ -171,7 +170,7 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
   assert(props.msgId, 'processOneSubjectMapDataToEncryptItems- props.msgId param missing');
 
   serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
-            action: 'processOneSubjectMapDataToEncryptItems-Create-EITEMS-Start',
+            action: 'processOneSubjectMapDataToEncryptItems-Create-values-to-encrypt-array-Start',
             msgId: props.msgId, subject: object['@id'], schemaTitle: schema.title, }, loggingMD);
 
   let keys = Object.keys(schema.properties);
@@ -218,9 +217,9 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
                           msgId: props.msgId, subject: object['@id'], key: key, keyDesc: keyDesc,
                           pai: pai['@id'], }, loggingMD);
 
-                let eitem = eItemFactory.create(uuid(), pai['@id'], JSONLDUtilsnp.getV(object, key));
-                eitemsMap.set(eitem.id, { id: object['@id'], key: key }); // record info needed to set encrypted value in object
-                eitems.push(eitem);
+                let oitem = PNOVUtils.createOItem(uuid(), pai['@id'], JSONLDUtilsnp.getV(object, key));
+                eitemsMap.set(oitem.id, { id: object['@id'], key: key }); // record info needed to set encrypted value in object
+                eitems.push(oitem);
               }
             }
           } // switch key.type
@@ -360,7 +359,7 @@ callbacks.createNodesBasedOnEitemMap = function createNodesBasedOnEitemMap(servi
                 msgId: props.msgId, privacyGraph: privacyGraph, pai: pai['@id'], }, loggingMD);
     }
 
-    let ov = eItemFactory.makeOVfromEitem(pai['@id'], eitems[i]);
+    let ov = PNOVUtils.createOVFromOItem(eitems[i]);
     if (!mapValue.embedKey) {
 
       if (sourceNode[mapValue.key]) {

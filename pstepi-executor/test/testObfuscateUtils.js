@@ -5,7 +5,6 @@ const BASE_P = BaseSubjectPNDataModel.PROPERTY;
 const JSONLDUtils = require('jsonld-utils/lib/jldUtils').npUtils;
 const obfuscateUtils = require('../lib/obfuscateUtils');
 const PNDataModel = require('data-models/lib/PNDataModel');
-const PN_P = PNDataModel.PROPERTY;
 const PN_T = PNDataModel.TYPE;
 const testUtils = require('node-utils/testing-utils/lib/utils');
 const util = require('util');
@@ -128,7 +127,7 @@ describe('OBFUSCATE - test obfuscate utils', function () {
 
     it('3.2 should return a privacy graph for the node if has a non embeded eitem for the node ', function () {
 
-      let eitems = [{ id: 'ei1', type: 'pia-type', v: 'cipher' }];
+      let eitems = [{ id: 'ei1', type: 'pai-id', v: 'cipher' }];
       let eitemsMap = new Map();
       eitemsMap.set('ei1', { id: alice['@id'], key: BASE_P.givenName });
 
@@ -144,14 +143,14 @@ describe('OBFUSCATE - test obfuscate utils', function () {
 
           pg.should.have.property(BASE_P.givenName);
           let ov = pg[BASE_P.givenName];
-          ov.should.have.property(PN_P.v, 'cipher');
-          ov.should.have.property('@type', fakePai['@id']);
+          ov.should.have.property('@value', 'cipher');
+          ov.should.have.property('@type', 'pai-id');
         });
     }); //it 3.2
 
     it('3.3 should return a privacy graph for the node if has an embeded eitem for the node ', function () {
 
-      let eitems = [{ id: 'ei1', type: 'encrypt-md-type', v: 'cipher' }];
+      let eitems = [{ id: 'ei1', type: 'pai-id', v: 'cipher' }];
       let eitemsMap = new Map();
       console.log('3.3 ALICE: %j', alice);
       eitemsMap.set('ei1', { id: alice['@id'], embedKey: BASE_P.address,
@@ -169,16 +168,16 @@ describe('OBFUSCATE - test obfuscate utils', function () {
 
           pg.should.have.property(BASE_P.address);
           pg[BASE_P.address].should.have.property(BASE_P.postalCode);
-          pg[BASE_P.address][BASE_P.postalCode].should.have.property('@type', fakePai['@id']);
-          pg[BASE_P.address][BASE_P.postalCode].should.have.property(PN_P.v, 'cipher');
+          pg[BASE_P.address][BASE_P.postalCode].should.have.property('@type', 'pai-id');
+          pg[BASE_P.address][BASE_P.postalCode].should.have.property('@value', 'cipher');
         });
     }); //it 3.3
 
     it('3.4 should return a privacy graph for the node if has a multipe eitems for node', function () {
 
       let eitems = [
-          { id: 'ei1', type: 'encrypt-md-type', v: 'cipher1', },
-          { id: 'ei2', type: 'encrypt-md-type', v: 'cipher2', },
+          { id: 'ei1', type: 'pai-id', v: 'cipher1', },
+          { id: 'ei2', type: 'pai-id', v: 'cipher2', },
         ];
       let eitemsMap = new Map();
       eitemsMap.set('ei1', { id: alice['@id'], key: BASE_P.givenName });
@@ -197,13 +196,13 @@ describe('OBFUSCATE - test obfuscate utils', function () {
 
           pg.should.have.property(BASE_P.givenName);
           let ov = pg[BASE_P.givenName];
-          ov.should.have.property(PN_P.v, 'cipher1');
-          ov.should.have.property('@type', fakePai['@id']);
+          ov.should.have.property('@value', 'cipher1');
+          ov.should.have.property('@type', 'pai-id');
 
           pg.should.have.property(BASE_P.address);
           pg[BASE_P.address].should.have.property(BASE_P.postalCode);
-          pg[BASE_P.address][BASE_P.postalCode].should.have.property('@type', fakePai['@id']);
-          pg[BASE_P.address][BASE_P.postalCode].should.have.property(PN_P.v, 'cipher2');
+          pg[BASE_P.address][BASE_P.postalCode].should.have.property('@type', 'pai-id');
+          pg[BASE_P.address][BASE_P.postalCode].should.have.property('@value', 'cipher2');
         });
     }); //it 3.4
 
