@@ -71,7 +71,22 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
   // get the schema to procss, note the schema is stored as a string otherwise
   // jsonld process of the node would remove items as not json-ld compliant.
   let schemaS = JSONLDUtils.getO(props.pai, PN_P.schema);
-  let schema = JSON.parse(schemaS);
+  let schema;
+
+  if (typeof schemaS === 'string') {
+    try {
+      schema = JSON.parse(schemaS);
+    } catch (err) {
+      serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'PAI-Executor-Execute-ERROR-Parsing-Schema-From-String',
+                                          msgId: props.msgId,
+                                          pai: props.pai['@id'],
+                                          schema: schemaS,
+                                          errror: err, }, loggingMD);
+      throw err;
+    }
+  } else {
+    schema = schemaS;
+  }
 
   //
   // Create the set of eitems that need to be passed to the obfuscation service

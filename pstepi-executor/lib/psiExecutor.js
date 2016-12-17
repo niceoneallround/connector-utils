@@ -72,7 +72,7 @@ class PSIExecutor {
         return result;
       })
       .catch(function (err) {
-        serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'EEROR-PSI-Executor-Using-Privacy-Step-Instance',
+        serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'PSI-Executor-Using-Privacy-Step-Instance-ERROR',
                                               msgId: props.msgId,
                                               psi: props.psi['@id'],
                                               error: err, }, loggingMD);
