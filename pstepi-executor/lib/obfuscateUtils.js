@@ -364,7 +364,7 @@ callbacks.createNodesBasedOnEitemMap = function createNodesBasedOnEitemMap(servi
       JSONLDUtils.addType2Node(privacyGraph, PN_T.PrivacyGraph);
       privacyGraphs.push(privacyGraph);
       privacyGraphMap.set(privacyGraph['@id'], privacyGraph);
-      serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'createNodesBasedOnEitemMap-CREATE-PRIVACY-GRAPH',
+      serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'createNodesBasedOnEitemMap-CREATE-NEW-PRIVACY-GRAPH',
                 msgId: props.msgId, privacyGraph: privacyGraph, pai: pai['@id'], }, loggingMD);
     }
 
@@ -409,6 +409,9 @@ callbacks.createNodesBasedOnEitemMap = function createNodesBasedOnEitemMap(servi
     }
 
   }
+
+  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'createNodesBasedOnEitemMap-COMPLETED',
+            msgId: props.msgId, data: privacyGraphs, }, loggingMD);
 
   return callback(null, { privacyGraphs: privacyGraphs });
 
