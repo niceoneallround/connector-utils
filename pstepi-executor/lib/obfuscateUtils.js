@@ -90,7 +90,8 @@ callbacks.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph
   assert(props, 'mapData2EncryptItems - props param missing');
   assert(props.msgId, 'mapData2EncryptItems - props.msgId param missing');
 
-  assert(schema.type, util.format('No type in json schema:%j', schema));
+  console.log(schema);
+  console.log(typeof schema);
   assert(schema.title, util.format('No title in json schema:%j', schema));
   assert(schema.properties, util.format('No properties in json schema:%j', schema));
 

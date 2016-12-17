@@ -51,7 +51,7 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
   // items that can be sent to the obfuscation service
   //
 
-  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PAI-Executor-Using-Privacy-Action-Instance',
+  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PAI-Executor-Execute-Using-Privacy-Action-Instance',
                                       msgId: props.msgId,
                                       pai: props.pai['@id'],
                                       metadata: props.pai, }, loggingMD);
@@ -63,16 +63,15 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
     data = [data];
   }
 
-  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PAI-Executor-Using-Data',
+  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PAI-Executor-Execute-Using-Data',
                                       msgId: props.msgId,
                                       pai: props.pai['@id'],
                                       data: data, }, loggingMD);
 
-  //
-  // Process the input data to generate the set of eitems that will need to be
-  // passed to the obfuscation service. Note for now always encryption hence eitems
-  //
-  let schema = JSONLDUtils.getO(props.pai, PN_P.schema);
+  // get the schema to procss, note the schema is stored as a string otherwise
+  // jsonld process of the node would remove items as not json-ld compliant.
+  let schemaS = JSONLDUtils.getO(props.pai, PN_P.schema);
+  let schema = JSON.parse(schemaS);
 
   //
   // Create the set of eitems that need to be passed to the obfuscation service
@@ -108,6 +107,16 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
     .then(function (privacyGraphs) {
 
       return callback(null, { '@graph': privacyGraphs.privacyGraphs });
+
+    })
+    .catch(function (err) {
+
+      serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'PAI-Executor-Execute-ERROR',
+                                          msgId: props.msgId,
+                                          pai: props.pai['@id'],
+                                          error: err, }, loggingMD);
+
+      throw err;
 
     });
 };
