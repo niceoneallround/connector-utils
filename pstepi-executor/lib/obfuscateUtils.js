@@ -231,9 +231,11 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
 
           let t = keyDesc.$ref;
           let k = t.replace('#/definitions/', '');
-          let newSchema = schema.definitions[k];
+          let embedSchema = schema.definitions[k];
+          let embedObject = object[key];
+          assert(embedObject, util.format('mapData2EncryptItems: Could not find emded object with key%s in the object:%j', key, object));
           let embeddedResult = utils.processOneSubjectMapDataToEncryptItems(
-                                            serviceCtx, object[key], newSchema, pai, props);
+                                            serviceCtx, embedObject, embedSchema, pai, props);
 
           eitems = eitems.concat(embeddedResult.eitems); // conact result eitems with new eitems
 
