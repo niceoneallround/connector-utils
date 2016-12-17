@@ -66,7 +66,18 @@ class PSIExecutor {
     props.pai = props.psi[PN_P.privacyActionInstance][0];
 
     // call execute pai promise
-    return this.paiExecutor.execute(serviceCtx, props);
+    return this.paiExecutor.execute(serviceCtx, props)
+      .then(function (result) {
+        // just return the result
+        return result;
+      })
+      .catch(function (err) {
+        serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'EEROR-PSI-Executor-Using-Privacy-Step-Instance',
+                                              msgId: props.msgId,
+                                              psi: props.psi['@id'],
+                                              error: err, }, loggingMD);
+        throw err;
+      });
   }
 
 }
