@@ -146,7 +146,6 @@ callbacks.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph
 
     for (let i = 0; i < subjects.length; i++) {
       let object = id2ObjectMap.get(subjects[i]['@id']);
-      console.log('*********', object);
       assert(object, util.format('mapData2EncryptItems: Could not find object with id:%s in the id2ObjectMap:%j', subjects[i]['@id'], id2ObjectMap));
 
       let result = utils.processOneSubjectMapDataToEncryptItems(serviceCtx, object, schema, pai, { msgId: props.msgId });
@@ -238,7 +237,6 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
                     msgId: props.msgId, subjectId: object['@id'], key: key, embedObject: embedObject, embedSchema: embedSchema,
                     pai: pai['@id'], }, loggingMD);
 
-          console.log('*******emdedObject:%j, key:%s, %j', embedObject, key, object);
           assert(embedObject, util.format('mapData2EncryptItems: Could not find emded object with key%s in the object:%j', key, object));
           let embeddedResult = utils.processOneSubjectMapDataToEncryptItems(
                                             serviceCtx, embedObject, embedSchema, pai, props);

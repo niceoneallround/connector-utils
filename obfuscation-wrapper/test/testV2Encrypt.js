@@ -27,7 +27,7 @@ describe('YES v2Encrypt - tests', function () {
       let items = [];
       items.push(PNOVUtils.createOItem('id1', 'type1', 'value1'));
       items.push(PNOVUtils.createOItem('id2', 'type2', 'value2'));
-      let promiseResult = v2Encrypt.execute(dummyServiceCtx, items, {});
+      let promiseResult = v2Encrypt.execute(dummyServiceCtx, items, { msgId: 'msgId1', });
       return promiseResult.then(function (result) {
         result.length.should.equal(2);
         result[0].should.have.property('v', 'cipher-0');

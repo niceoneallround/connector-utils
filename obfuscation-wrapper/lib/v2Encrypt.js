@@ -68,6 +68,10 @@ ENCRYPT RESPONSE from the External Obfuscation Service
 */
 
 const assert = require('assert');
+const loggingMD = {
+        ServiceType: 'connector-utils/obfuscation-wrapper',
+        FileName: 'v2Encrypt.js', };
+const util = require('util');
 
 let utils = {};
 
@@ -87,6 +91,11 @@ utils.execute = function execute(serviceCtx, items, props) {
   assert(serviceCtx, 'execute - serviceCtx param missing');
   assert(items, 'execute - items param missing');
   assert(props, 'execute - props param missing');
+  assert(props.msgId, util.format('execute - props.msgId param missing:%j', props));
+
+  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Encrypt-Start',
+                                      msgId: props.msgId,
+                                      data: items, }, loggingMD);
 
   // expand and compact using JSON-LD context
 
@@ -99,6 +108,10 @@ utils.execute = function execute(serviceCtx, items, props) {
     for (let i = 0; i < items.length; i++) {
       items[i].v = 'cipher-' + i;
     }
+
+    serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Encrypt-End',
+                                        msgId: props.msgId,
+                                        data: items, }, loggingMD);
 
     resolve(items);
   });

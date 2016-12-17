@@ -89,7 +89,7 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
       // call the obfuscation service -
       // for now hardcoded to call v2 and pass none of required params only so ca get up and runnung
       //
-      return v2Encrypt.execute(serviceCtx, rCtx.makeItemsResult.eitems, {});
+      return v2Encrypt.execute(serviceCtx, rCtx.makeItemsResult.eitems, props);
     });
 
   let promisePrivacyGraphs = promiseObfuscatedItems
