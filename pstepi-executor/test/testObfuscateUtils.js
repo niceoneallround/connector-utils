@@ -167,6 +167,7 @@ describe('OBFUSCATE - test obfuscate utils', function () {
           JSONLDUtils.isType(pg, PN_T.PrivacyGraph).should.be.equal(true, 'not a privacy graph');
 
           pg.should.have.property(BASE_P.address);
+          pg[BASE_P.address].should.have.property('@id');
           pg[BASE_P.address].should.have.property(BASE_P.postalCode);
           pg[BASE_P.address][BASE_P.postalCode].should.have.property('@type', 'pai-id');
           pg[BASE_P.address][BASE_P.postalCode].should.have.property('@value', 'cipher');

@@ -174,7 +174,7 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
 
   serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
             action: 'processOneSubjectMapDataToEncryptItems-Create-values-to-encrypt-array-Start',
-            msgId: props.msgId, subject: object['@id'], schemaTitle: schema.title, }, loggingMD);
+            msgId: props.msgId, subjectId: object['@id'], schemaTitle: schema.title, }, loggingMD);
 
   let keys = Object.keys(schema.properties);
   let eitems = [];
@@ -217,7 +217,7 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
               if (object[key]) {
                 serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
                           action: 'processOneSubjectMapDataToEncryptItems-Create-OItem',
-                          msgId: props.msgId, subject: object['@id'], key: key, keyDesc: keyDesc,
+                          msgId: props.msgId, subjectId: object['@id'], key: key, keyDesc: keyDesc,
                           pai: pai['@id'], }, loggingMD);
 
                 let oitem = PNOVUtils.createOItem(uuid(), pai['@id'], JSONLDUtilsnp.getV(object, key));
@@ -233,6 +233,11 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
           let k = t.replace('#/definitions/', '');
           let embedSchema = schema.definitions[k];
           let embedObject = object[key];
+          serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
+                    action: 'processOneSubjectMapDataToEncryptItems-Embedded-Object',
+                    msgId: props.msgId, subjectId: object['@id'], key: key, embedObject: embedObject, embedSchema: embedSchema,
+                    pai: pai['@id'], }, loggingMD);
+
           console.log('*******emdedObject:%j, key:%s, %j', embedObject, key, object);
           assert(embedObject, util.format('mapData2EncryptItems: Could not find emded object with key%s in the object:%j', key, object));
           let embeddedResult = utils.processOneSubjectMapDataToEncryptItems(
