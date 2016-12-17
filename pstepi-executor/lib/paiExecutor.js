@@ -37,11 +37,11 @@ promises.execute = function promiseExecute(serviceCtx, props) {
 
 callbacks.execute = function execute(serviceCtx, props, callback) {
   'use strict';
-  assert(serviceCtx, 'paction-execute: serviceCtx param is missing');
-  assert(props, 'paction-execute: props param is missing');
-  assert(props.graph, 'paction-execute: props.graph missing');
-  assert(props.pai, 'paction-execute: props.pai privacy action instance missing');
-  assert(props.msgId, 'paction-execute: props.msgId missing');
+  assert(serviceCtx, 'pactioni-execute: serviceCtx param is missing');
+  assert(props, 'pactioni-execute: props param is missing');
+  assert(props.graph, 'pactioni-execute: props.graph missing');
+  assert(props.pai, 'pactioni-execute: props.pai privacy action instance missing');
+  assert(props.msgId, 'pactioni-execute: props.msgId missing');
 
   let rCtx = {};
 

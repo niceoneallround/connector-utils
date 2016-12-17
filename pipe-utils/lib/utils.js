@@ -1,12 +1,5 @@
 /*jslint node: true, vars: true */
 
-/*
-
-Provides utility routines to create a privacy pipe using the apigwRequestWrapper
-adding error handling.
-
-*/
-
 const apigwRequestWrapper = require('node-utils/apigwRequestWrapper/lib/apigwRequestWrapper');
 const assert = require('assert');
 const JWTClaims = require('jwt-utils/lib/jwtUtils').claims;
@@ -26,19 +19,22 @@ let promises = {};
 let callbacks = {};
 
 /*
- CREATE PRIVACY PIPE
+ promise to CREATE PRIVACY PIPE
 
  Accepts a partial pipe, wraps in a metadata JWT and sends it to the privacy broker
  using the APIGW wrapper.
-
- The result JWT is verified and if all ok a JSON object containing the pipe and optional provision
- is returned, otherwise a PN Error is returned.
 
  The parameters are
  * serviceCtx - normal
  * requestId - used for logging only
  * pipe - the partial pipe json-ld node
  * props - can be empty
+
+ The result JWT from the privacy broker is verified, if all ok the following is returned
+     { pipe: the pipe, provision: optional provision }
+
+ otherwise a PN Error is returned.
+
 */
 
 promises.createPrivacyPipe = function promiseCreatePrivacyPipe(serviceCtx, requestId, pipe, props) {
