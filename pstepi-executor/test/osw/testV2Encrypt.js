@@ -1,5 +1,5 @@
 /*jslint node: true, vars: true */
-const v2Encrypt = require('../lib/v2Encrypt');
+const v2Encrypt = require('../../lib/osw/v2Encrypt');
 const PNOVUtils = require('data-models/lib/PNObfuscatedValue').utils;
 const should = require('should');
 const testUtils = require('node-utils/testing-utils/lib/utils');

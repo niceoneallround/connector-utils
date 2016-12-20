@@ -5,7 +5,7 @@ const JSONLDUtils = require('jsonld-utils/lib/jldUtils').npUtils;
 const obfuscateUtils = require('./obfuscateUtils');
 const PNDataModel = require('data-models/lib/PNDataModel');
 const PN_P = PNDataModel.PROPERTY;
-const v2Encrypt = require('../../obfuscation-wrapper/lib/v2Encrypt');
+const v2Encrypt = require('./osw/v2Encrypt');
 
 const loggingMD = {
         ServiceType: 'connector-utils/pstepi-executor',

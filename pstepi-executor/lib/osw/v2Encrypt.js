@@ -69,7 +69,7 @@ ENCRYPT RESPONSE from the External Obfuscation Service
 
 const assert = require('assert');
 const loggingMD = {
-        ServiceType: 'connector-utils/obfuscation-wrapper',
+        ServiceType: 'connector-utils/pstepi-executor/osw',
         FileName: 'v2Encrypt.js', };
 const util = require('util');
 
@@ -78,8 +78,8 @@ let utils = {};
 //
 // serviceCtx
 // items an array of OItems
-// props.os - the obfuscation service resource
-// props.kms - the kms service resource
+// props.os - the obfuscation service pn resource
+// props.kms - the kms service pn resource
 // props.cekm - content encrypt key metadata
 // props.pai - privacy action instance
 //
@@ -96,6 +96,24 @@ utils.execute = function execute(serviceCtx, items, props) {
   serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Encrypt-Start',
                                       msgId: props.msgId,
                                       data: items, }, loggingMD);
+
+  //
+  // Create the external encryptMetadata that needs to be sent to the external service
+  // these are blank nodes created just for this call
+  //
+
+  //
+  // Create the external item information from the passed in items and set
+  // type to the newley created encrypt metadata. Reuse the id so can link back
+  //
+
+  //
+  // Invoke the exetrnal OS using the obfuscate_endpoint
+  //
+
+  //
+  // Repackage the results from the obfuscation service
+  //
 
   // expand and compact using JSON-LD context
 
