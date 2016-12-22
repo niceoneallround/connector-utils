@@ -1,22 +1,30 @@
 /*jslint node: true, vars: true */
+const assert = require('assert');
+const nock = require('nock');
+const HttpStatus = require('http-status');
 const v2Encrypt = require('../../lib/osw/v2Encrypt');
 const KMSCanons = require('metadata/lib/kms').canons;
 const OSCanons = require('metadata/lib/obfuscationService').canons;
 const PNOVUtils = require('data-models/lib/PNObfuscatedValue').utils;
 const PSICanons = require('metadata/lib/PrivacyStepInstance').canons;
+const PNDataModel = require('data-models/lib/PNDataModel');
+const PN_P = PNDataModel.PROPERTY;
 const should = require('should');
 const testUtils = require('node-utils/testing-utils/lib/utils');
+const localTestCanons = require('../utils').canons;
+const util = require('util');
 
-describe('YES v2Encrypt - tests', function () {
+describe('v2Encrypt - tests', function () {
   'use strict';
 
   let dummyServiceCtx;
+  let pstepI = PSICanons.createObfuscatePrivacyStepI({ hostname: 'hostname', domainName: 'domainName', });
 
   let props = {};
   props.msgId = 'msgId1';
   props.kms = KMSCanons.createTestKMS({ hostname: 'hostname', domainName: 'domainName', });
   props.os = OSCanons.createTestObfuscationService({ hostname: 'hostname', domainName: 'domainName', });
-  props.pai = PSICanons.createObfuscatePrivacyStepI({ hostname: 'hostname', domainName: 'domainName', });
+  props.pai = pstepI[PN_P.privacyActionInstance][0]; // set to canon privacy action instance
   props.cekmd = 'add content encryption key md';
 
   let items = [];
@@ -55,7 +63,7 @@ describe('YES v2Encrypt - tests', function () {
           result.encryption_metadata.kms.should.have.property('algorithm');
           result.encryption_metadata.kms.should.have.property('provider');
 
-          console.log('*******', result.items);
+          //console.log('*******', result.items);
 
           for (let i = 0; i < result.items.length; i++) {
             console.log(items[i]);
@@ -70,10 +78,39 @@ describe('YES v2Encrypt - tests', function () {
   describe('2 execute encryption', function () {
 
     it('2.1 should return a promise that contains the encrypted items', function () {
+      //
+      // Nock out the call to the obfuscation service that is in the canon
+      //
+      // nock out the GET for the home document
+
+      nock('http://test.webshield.io')
+            .log(console.log)
+            .defaultReplyHeaders({ 'Content-Type': 'application/json', })
+            .post('/obfuscation_service/v2/encrypt')
+            .reply(HttpStatus.OK, function (uri, requestBody) {
+              //requestBody.should.be.equal(jwtM);
+              this.req.headers.should.have.property('content-type', 'application/json');
+              uri.should.equal('/obfuscation_service/v2/encrypt');
+              assert(requestBody, util.format('no request request body:%j', requestBody));
+
+              //console.log('****', requestBody);
+              requestBody.should.have.property('type', 'EncryptRequest');
+              return localTestCanons.encryptResponse(requestBody.items);
+            });
+
       let promiseResult = v2Encrypt.execute(dummyServiceCtx, items, props);
       return promiseResult.then(function (result) {
-        result.length.should.equal(2);
-        result[0].should.have.property('v', 'cipher-0');
+        result.should.have.property('@graph');
+        let items = result['@graph'];
+        items.length.should.equal(2);
+        items[0].should.have.property('id', 'id1');
+        items[0].should.have.property('ov');
+        items[0].ov.should.have.property('@type', props.pai['@id']);
+        items[0].ov.should.have.property('@value');
+        items[1].should.have.property('id', 'id2');
+        items[1].should.have.property('ov');
+        items[1].ov.should.have.property('@type', props.pai['@id']);
+        items[1].ov.should.have.property('@value');
       });
     }); //it 2.1
   }); // describe 2

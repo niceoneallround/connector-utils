@@ -113,7 +113,7 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
       // note these only contain nodes that should be obfuscated
       //
       return obfuscateUtils.promises.createNodesBasedOnEitemMap(
-                serviceCtx, encryptedOitems,
+                serviceCtx, encryptedOitems['@graph'],
                 rCtx.makeItemsResult.eitemsMap, data, props.pai, props);
     });
 

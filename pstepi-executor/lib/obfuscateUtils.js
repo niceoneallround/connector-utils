@@ -268,6 +268,11 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
 // eitems map contains the node @id and any fields of that node that have either
 // been obfuscated or de-obfuscated.
 //
+// The input eitems to build the provacy graph from are of the format
+//  - id: the id to lookup the value
+//  - ov: The PN Obfuscated Value to place in the privacy graph
+//
+//
 // Assumptions
 //  1. SourceGraph is an array of subjects so no need to flatten to find
 //
@@ -369,7 +374,9 @@ callbacks.createNodesBasedOnEitemMap = function createNodesBasedOnEitemMap(servi
                 msgId: props.msgId, privacyGraph: privacyGraph, pai: pai['@id'], }, loggingMD);
     }
 
-    let ov = PNOVUtils.createOVFromOItem(eitems[i]);
+    // Find Obfuscated Value
+    assert(eitems[i].ov, util.format('createNodesBasedOnEitemMap: item does not have an ov property:%j', eitems[i]));
+    let ov = eitems[i].ov;
     if (!mapValue.embedKey) {
 
       if (sourceNode[mapValue.key]) {

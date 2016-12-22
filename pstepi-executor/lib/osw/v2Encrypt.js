@@ -1,7 +1,11 @@
 /*
 
-Returns a promise for the result of calling a v2 protocol encrypt
-service.
+Returns a promise containing the encrypted items after calling a v2 protocol encrypt
+service. In the following format
+
+{ '@graph': [
+  { id: 'passed in id', ov: the PN obfuscated Value  }
+]}
 
 Performs the following
   - converts a privacy algorithm to the format needed to send to the service
@@ -73,10 +77,13 @@ const loggingMD = {
         FileName: 'v2Encrypt.js', };
 const JSONLDPromises = require('jsonld-utils/lib/jldUtils').promises;
 const JSONLDUtils = require('jsonld-utils/lib/jldUtils');
+const JSONLDUtilsNp = require('jsonld-utils/lib/jldUtils').npUtils;
 const encryptJSONLDContext = require('./model').model.encrypt.v2.jsonldContext;
 const PNDataModel = require('data-models/lib/PNDataModel');
 const PN_P = PNDataModel.PROPERTY;
 const PN_T = PNDataModel.TYPE;
+const PNOVUtils = require('data-models/lib/PNObfuscatedValue').utils;
+const requestWrapperPromises = require('node-utils/requestWrapper/lib/requestWrapper').promises;
 const util = require('util');
 
 let utils = {};
@@ -106,7 +113,7 @@ utils.execute = function execute(serviceCtx, items, props) {
   serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Encrypt-Start',
                                       msgId: props.msgId, }, loggingMD);
 
-  return model.promiseCompactEncryptRequest(items, props)
+  let promiseEncryptResult = model.promiseCompactEncryptRequest(items, props)
     .then(function (compactRequest) {
 
       serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Encrypt-Created-Encrypt-Request',
@@ -114,22 +121,55 @@ utils.execute = function execute(serviceCtx, items, props) {
                                           data: compactRequest, }, loggingMD);
 
       //
-      // for now just create a canon response, so can hook up and test
-      // add actual code later
+      // Invoke the obfuscation service to encrypt the items
       //
-      let encryptedItems = items;
-      for (let i = 0; i < items.length; i++) {
-        encryptedItems[i].v = 'cipher-' + i;
-      }
+      let postProps = {};
+      postProps.url = JSONLDUtilsNp.getV(props.os, PN_P.obfuscateEndpoint);
+      postProps.json = compactRequest;
 
-      serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Encrypt-End',
+      serviceCtx.logger.logProgress(util.format('POST EncryptRequest to Obfuscation Service:%s', postProps.url));
+
+      return requestWrapperPromises.postJSON(postProps);
+    });
+
+  return promiseEncryptResult
+    .then(
+      function (response) {
+
+        serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Encrypt-Response-From-Encryption-Service',
+                                            msgId: props.msgId,
+                                            data: response.body, }, loggingMD);
+
+        // create the response items
+        let body = JSON.parse(response.body);
+        let items = body.items;
+        let encryptedItems = [];
+        for (let i = 0; i < items.length; i++) {
+          encryptedItems.push({
+            id: items[i].id,
+            ov: PNOVUtils.createOVFromOItem({ type: props.pai['@id'], v: items[i].v, n: items[i].n, aad: items[i].aad, }), // create Obfuscated Value
+          });
+        }
+
+        serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Encrypt-End',
+                                            msgId: props.msgId,
+                                            data: encryptedItems, }, loggingMD);
+
+        return { '@graph': encryptedItems, };
+      },
+
+    function (err) {
+      // error calling encrypt
+      serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'v2Encrypt-Error-Calling-Encryption-Service',
                                           msgId: props.msgId,
-                                          data: encryptedItems, }, loggingMD);
-
-      return encryptedItems;
-
+                                          err: err, }, loggingMD);
+      throw err;
     });
 };
+
+//---------------------
+// Utils
+//----------------------
 
 let model = {};
 
@@ -190,9 +230,7 @@ model.createEncryptItems = function createEncryptItems(items, encryptMetadata) {
 model.promiseCompactEncryptRequest = function promiseCompactEncryptRequest(items, props) {
   'use strict';
 
-  let eRequest = {
-    '@id': '_:add uuid',
-    '@type': PN_T.EncryptRequest, };
+  let eRequest = JSONLDUtils.createBlankNode({ '@type': PN_T.EncryptRequest, });
 
   //
   // Create the external encryptMetadata that needs to be sent to the external service

@@ -3,6 +3,9 @@ const assert = require('assert');
 const BaseSubjectPNDataModel = require('data-models/lib/BaseSubjectPNDataModel');
 const JSONLDUtils = require('jsonld-utils/lib/jldUtils').npUtils;
 const KMSCanons = require('metadata/lib/kms').canons;
+const localTestCanons = require('./utils').canons;
+const HttpStatus = require('http-status');
+const nock = require('nock');
 const OSCanons = require('metadata/lib/obfuscationService').canons;
 const paiExecutor = require('../lib/paiExecutor');
 const PAIUtils = require('metadata/lib/PrivacyActionInstance').utils;
@@ -49,6 +52,22 @@ describe('PAI Test Privacy Action Instance Executor', function () {
 
       let pai = PAIUtils.YAML2Node(paiYAML, props1);
 
+      // nock out call to the obfuscation service
+      nock('http://test.webshield.io')
+            .log(console.log)
+            .defaultReplyHeaders({ 'Content-Type': 'application/json', })
+            .post('/obfuscation_service/v2/encrypt')
+            .reply(HttpStatus.OK, function (uri, requestBody) {
+              //requestBody.should.be.equal(jwtM);
+              this.req.headers.should.have.property('content-type', 'application/json');
+              uri.should.equal('/obfuscation_service/v2/encrypt');
+              assert(requestBody, util.format('no request request body:%j', requestBody));
+
+              //console.log('****', requestBody);
+              requestBody.should.have.property('type', 'EncryptRequest');
+              return localTestCanons.encryptResponse(requestBody.items);
+            });
+
       let props = { graph: graph,
                 pai: pai,
                 msgId: '1',
@@ -63,8 +82,11 @@ describe('PAI Test Privacy Action Instance Executor', function () {
           for (let i = 0; i < pgs.length; i++) {
             let pg = pgs[i];
 
-            //console.log(pg);
+            // perform some basic check as lower levels are already tested
             assert(JSONLDUtils.isType(pg, PN_T.PrivacyGraph), util.format('Expected type Privacy Graph:%j', pg));
+            pg.should.have.property('https://schema.org/givenName');
+            pg['https://schema.org/givenName'].should.have.property('@type', pai['@id']);
+            pg['https://schema.org/givenName'].should.have.property('@value');
           }
         });
 
