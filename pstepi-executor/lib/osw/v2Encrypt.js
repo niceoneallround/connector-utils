@@ -178,8 +178,8 @@ model.createEncryptItems = function createEncryptItems(items, encryptMetadata) {
 
     let ei = { '@id': items[i].id, '@type': encryptMetadata['@id'], };
 
-    // convert string to a base64[byte[]] - note buffer implemments a javascript typed array of Uint8Array
-    ei[PN_P.v] = Buffer.from(items[i].v, 'base64');
+    // convert to base64, note kind of assumes input is a string need to look at other types
+    ei[PN_P.v] = Buffer.from(items[i].v).toString('base64');
 
     result.push(ei);
   }

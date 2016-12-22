@@ -55,7 +55,10 @@ describe('YES v2Encrypt - tests', function () {
           result.encryption_metadata.kms.should.have.property('algorithm');
           result.encryption_metadata.kms.should.have.property('provider');
 
+          console.log('*******', result.items);
+
           for (let i = 0; i < result.items.length; i++) {
+            console.log(items[i]);
             result.items[i].should.have.property('id');
             result.items[i].should.have.property('type');
             result.items[i].should.have.property('v');
