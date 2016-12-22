@@ -2,6 +2,8 @@
 const assert = require('assert');
 const BaseSubjectPNDataModel = require('data-models/lib/BaseSubjectPNDataModel');
 const JSONLDUtils = require('jsonld-utils/lib/jldUtils').npUtils;
+const KMSCanons = require('metadata/lib/kms').canons;
+const OSCanons = require('metadata/lib/obfuscationService').canons;
 const paiExecutor = require('../lib/paiExecutor');
 const PAIUtils = require('metadata/lib/PrivacyActionInstance').utils;
 const PNDataModel = require('data-models/lib/PNDataModel');
@@ -33,7 +35,8 @@ describe('PAI Test Privacy Action Instance Executor', function () {
       ], };
 
       // create a privacy action instance to execute
-      let props = { hostname: 'fake.hostname', domainName: 'fake.com', pa: 'fake.pa' };
+      let props1 = { hostname: 'fake.hostname', domainName: 'fake.com', pa: 'fake.pa' };
+
       let paiYAML = {
         id: 'privacy-action-instance-1',
         privacy_action: 'action-1-id',
@@ -44,9 +47,14 @@ describe('PAI Test Privacy Action Instance Executor', function () {
         encrypt_key_md_jwt: 'keymd_jwt',
       };
 
-      let pai = PAIUtils.YAML2Node(paiYAML, props);
+      let pai = PAIUtils.YAML2Node(paiYAML, props1);
 
-      props = { graph: graph, pai: pai, msgId: '1' };
+      let props = { graph: graph,
+                pai: pai,
+                msgId: '1',
+                kms: KMSCanons.createTestKMS(props1),
+                os: OSCanons.createTestObfuscationService(props1),
+                cekmd: 'content encrypt key md', };
       return paiExecutor.promises.execute(serviceCtx, props)
         .then(function (result) {
           let pgs = result['@graph'];

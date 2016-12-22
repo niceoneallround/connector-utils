@@ -49,7 +49,7 @@ let utils = {}; // expose to support testing
 //  - n - for now set to null, may be returned by caller
 //  - aad - for now set to null - can set to the @id the subject - code just knows to do this
 //
-// The @context is
+// The jsonld @context is
 //  - id: @id
 //  - type: @type
 //  - v: pn_p.v
@@ -57,11 +57,11 @@ let utils = {}; // expose to support testing
 //  - aad: pn_p.aad
 //
 // Returns the following
-//  - array of encrypt item
+//  - array of encrypt items of format { id: , type: paiId, v:, n:<optional>, aad:<optional> }
 //  - map of the form <key: eitem.id, value: mapValue> mapValue contains the following
 //     - non embedded field the mapValue contains
 //          { id: <object id>, key: <property name }
-//     - embed object teh mapValue contains
+//     - embed object the mapValue contains
 //          { id: <object id>, embedKey: <embed key name>, embed: { id: <embed object id>, key: <embed property name }}>
 //
 //  Example embedded mapValue

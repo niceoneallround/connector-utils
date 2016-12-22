@@ -6,19 +6,37 @@ external services
 */
 
 let model = {};
-model.jsonldContext = {};
 
-model.jsonldContext.v2 = {};
+//
+// the encrypt message formats
+model.encrypt = {};
+model.encrypt.v2 = {};
 
-// context used on v2 encrypt and decrypt messages
-model.jsonldContext.v2.encrypt = {
+model.encrypt.v2.jsonldContext = {
   id: '@id',
   type: '@type',
-  pnp: 'https://dc.test.schema.webshield.io/prop#',
-  pnt: 'https://dc.test.schema.webshield.io/type#',
+  pnp0: 'http://api.webshield.io/prop#',
+  pnt0: 'http://api.webshield.io/type#',
+  pnp: 'http://pn.schema.webshield.io/prop#',
+  pnt: 'http://pn.schema.webshield.io/type#',
 
+  EncryptMetadata: 'pnt:EncryptMetadata',
   EncryptRequest: 'pnt:EncryptRequest',
   EncryptResponse: 'pnt:EncryptResponse',
+  Metadata: 'pnt0:Metadata',
+  KMS: 'pnt:KMS',
+  Resource: 'pnt:Resource',
+
+  algorithm: 'pnp:algorithm',
+  creation_time: 'pnp0:creation_time',
+  content_encrypt_key_md: 'pnp:content_encrypt_key_md',
+  content_obfuscation_algorithm: 'pnp:content_obfuscation_algorithm',
+  description: 'pnp0:description',
+  encryption_metadata: 'pnp:encryption_metadata',
+  issuer: 'pnp0:issuer',
+  kms: 'pnp:kms',
+  os: 'pnp:os',
+  provider: 'pnp:provider',
 
   aad: 'pnp:aad',
   items: 'pnp:items',
