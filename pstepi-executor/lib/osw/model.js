@@ -15,12 +15,14 @@ model.encrypt.v2 = {};
 model.encrypt.v2.jsonldContext = {
   id: '@id',
   type: '@type',
+  value: '@value',
   pnp0: 'http://api.webshield.io/prop#',
   pnt0: 'http://api.webshield.io/type#',
   pnp: 'http://pn.schema.webshield.io/prop#',
   pnt: 'http://pn.schema.webshield.io/type#',
 
   EncryptMetadata: 'pnt:EncryptMetadata',
+  EncryptKeyMetadata: 'pnt:EncryptKeyMetadata',
   EncryptRequest: 'pnt:EncryptRequest',
   EncryptResponse: 'pnt:EncryptResponse',
   Metadata: 'pnt0:Metadata',
@@ -36,7 +38,9 @@ model.encrypt.v2.jsonldContext = {
   issuer: 'pnp0:issuer',
   kms: 'pnp:kms',
   os: 'pnp:os',
+  obfuscation_provider: 'pnp:obfuscation_provider',
   provider: 'pnp:provider',
+  raw_encrypt_key_metadata: 'pnp:raw_encrypt_key_metadata',
 
   aad: 'pnp:aad',
   items: 'pnp:items',
