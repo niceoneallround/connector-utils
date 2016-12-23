@@ -58,12 +58,6 @@ describe('PAI Test Privacy Action Instance Executor', function () {
             .defaultReplyHeaders({ 'Content-Type': 'application/json', })
             .post('/obfuscation_service/v2/encrypt')
             .reply(HttpStatus.OK, function (uri, requestBody) {
-              //requestBody.should.be.equal(jwtM);
-              this.req.headers.should.have.property('content-type', 'application/json');
-              uri.should.equal('/obfuscation_service/v2/encrypt');
-              assert(requestBody, util.format('no request request body:%j', requestBody));
-
-              //console.log('****', requestBody);
               requestBody.should.have.property('type', 'EncryptRequest');
               return localTestCanons.encryptResponse(requestBody.items);
             });

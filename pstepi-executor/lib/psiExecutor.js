@@ -67,12 +67,21 @@ class PSIExecutor {
 
     // call execute pai promise
     return this.paiExecutor.execute(serviceCtx, props)
-      .then(function (result) {
-        // just return the result
-        return result;
-      })
+      .then(
+        function (result) {
+          // just return the result
+          return result;
+        },
+
+        function (err) {
+          serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'PSI-Executor-Using-Privacy-Step-Instance-ERROR',
+                                                msgId: props.msgId,
+                                                psi: props.psi['@id'],
+                                                error: err, }, loggingMD);
+          throw err;
+        })
       .catch(function (err) {
-        serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'PSI-Executor-Using-Privacy-Step-Instance-ERROR',
+        serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'PSI-Executor-Using-Privacy-Step-Instance-Catch-ERROR',
                                               msgId: props.msgId,
                                               psi: props.psi['@id'],
                                               error: err, }, loggingMD);
