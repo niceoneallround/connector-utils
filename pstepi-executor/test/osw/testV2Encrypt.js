@@ -3,6 +3,7 @@ const assert = require('assert');
 const nock = require('nock');
 const HttpStatus = require('http-status');
 const v2Encrypt = require('../../lib/osw/v2Encrypt');
+const EKMDCanons = require('metadata/lib/encryptKeyMetadata').canons;
 const KMSCanons = require('metadata/lib/kms').canons;
 const OSCanons = require('metadata/lib/obfuscationService').canons;
 const PNOVUtils = require('data-models/lib/PNObfuscatedValue').utils;
@@ -25,7 +26,9 @@ describe('v2Encrypt - tests', function () {
   props.kms = KMSCanons.createTestKMS({ hostname: 'hostname', domainName: 'domainName', });
   props.os = OSCanons.createTestObfuscationService({ hostname: 'hostname', domainName: 'domainName', });
   props.pai = pstepI[PN_P.privacyActionInstance][0]; // set to canon privacy action instance
-  props.cekmd = 'add content encryption key md';
+  props.cekmd = EKMDCanons.createTestKey({ hostname: 'hostname', domainName: 'domainName', });
+
+  console.log(props.pai);
 
   let items = [];
   items.push(PNOVUtils.createOItem('id1', 'type1', 'value1'));
@@ -48,6 +51,7 @@ describe('v2Encrypt - tests', function () {
     it('1.1 should return a promise that contains the encrypted items', function () {
       return v2Encrypt.model.promiseCompactEncryptRequest(items, props)
         .then(function (result) {
+          console.log('*******', result);
           result.should.have.property('@context');
           result.should.have.property('id');
           result.should.have.property('type', 'EncryptRequest');
@@ -56,12 +60,17 @@ describe('v2Encrypt - tests', function () {
 
           result.encryption_metadata.should.have.property('id');
           result.encryption_metadata.should.have.property('type', 'EncryptMetadata');
+          result.encryption_metadata.should.have.property('obfuscation_provider');
+          result.encryption_metadata.should.have.property('content_obfuscation_algorithm');
           result.encryption_metadata.should.have.property('content_encrypt_key_md');
-          result.encryption_metadata.should.have.property('kms');
-          result.encryption_metadata.kms.should.have.property('id');
-          result.encryption_metadata.kms.should.have.property('type');
-          result.encryption_metadata.kms.should.have.property('algorithm');
-          result.encryption_metadata.kms.should.have.property('provider');
+          result.encryption_metadata.should.have.property('content_encrypt_key_md_jwt');
+          result.encryption_metadata.should.not.have.property('kms');
+
+          let cekmd = result.encryption_metadata.content_encrypt_key_md;
+          cekmd.should.have.property('id');
+          cekmd.should.have.property('type');
+          cekmd.should.have.property('raw_encrypt_key_md_type', 'jsonwebkey');
+          cekmd.should.have.property('raw_encrypt_key_md');
 
           //console.log('*******', result.items);
 
@@ -95,6 +104,17 @@ describe('v2Encrypt - tests', function () {
 
               //console.log('****', requestBody);
               requestBody.should.have.property('type', 'EncryptRequest');
+
+              // check expaned key information
+              let cekmd = requestBody.encryption_metadata.content_encrypt_key_md;
+              cekmd.should.have.property('id');
+              cekmd.should.have.property('type');
+              cekmd.should.have.property('raw_encrypt_key_md_type', 'jsonwebkey');
+              cekmd.should.have.property('raw_encrypt_key_md');
+              cekmd.raw_encrypt_key_md.should.have.property('kty');
+              cekmd.raw_encrypt_key_md.should.have.property('alg');
+              cekmd.raw_encrypt_key_md.should.have.property('k');
+
               return localTestCanons.encryptResponse(requestBody.items);
             });
 

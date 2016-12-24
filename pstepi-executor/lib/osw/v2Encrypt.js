@@ -18,18 +18,27 @@ The V2 Protocol request is of the following format
 // assume a @context
 //
 
-ENCRYPT REQUEST sent to the External Obfuscation Service - created from past in values
-{
-  '@id': ‘ a request id’,
-  '@type': http://pn.schema.webshield.io/type#EncryptRequest,
-  'https://pn.schema.webshield.io/prop#obfuscation_metadata':
+The ENCRYPT REQUEST sent to the External Obfuscation Service - created from past in values
+{  // The compact jsonld context
+  '@context': 'JSON LD context',
+  'id': ‘ a request id’,
+  'type': EncryptRequest,
+  'encryption_metadata':
   { // the header
-    ‘@id’: “blank node id”,
-    ‘@type: http://pn.schema.webshield.io/type#EncryptMetadata’,
-    ‘https://pn.schema.webshield.io/prop#content_obfuscation_algorithm’:
-    'https://pn.schema.webshield.io/prop#obfuscation_provider':
-    'https://pn.schema.webshield.io/prop#kms': 'kms resource object',
-    'https://pn.schema.webshield.io/prop#content_encrypt_key_md': 'the key resource'
+    ‘id’: “blank node id”,
+    ‘type: http://pn.schema.webshield.io/type#EncryptMetadata’,
+    ‘content_obfuscation_algorithm’:
+    'obfuscation_provider':
+    'content_encrypt_key_md_jwt': the JWT holding the content encrypt key that is decoded in the content_encrypt_key_md
+    'content_encrypt_key_md': { // a compact version of content encrypt key md
+      'id':
+      'type': EncryptKeyMetadata, Metadata,
+      'raw_encrypt_key_md_type': jsonwebkey, json, or jwt
+      'raw_encrypt_key_md': depends on type, acts as follows
+        'jwt': base64 encoded value
+        'json or jsonwebkey': the object
+
+    }
   },
   // Array of items to encrypt, each item has the following fields
   // id - id for the field, in future will be opaque. This is passed back in the response
@@ -38,7 +47,7 @@ ENCRYPT REQUEST sent to the External Obfuscation Service - created from past in 
   // n - optional - if passed in the service should use as the randominess to add
   // aad - optional - if passed in the service should uses as the additional authenticaiton data
   //
-  'http://pn.schema.webshield.io/prop#items':
+  'items':
   [
     { ‘id’ : ‘an id', ‘type’: ‘http://.../md-1’, ‘v’ : base64(bytes[]) , n: base64(bytes[], aad: base64(bytes[]},
     { ‘id’ : ‘an id',   ‘type’: ‘http://..../md-1’, ‘v’ : base64(bytes[], n: base64(bytes[], aad: base64(bytes[]) }
@@ -121,6 +130,35 @@ utils.execute = function execute(serviceCtx, items, props) {
                                           data: compactRequest, }, loggingMD);
 
       //
+      // As a convenience if the raw_encrypt_key_md is a JSON or JSONWebKey type then
+      // expand it for the caller, need to do here to ensure compact does not remove
+      // any non URL props or types
+      //
+      let cemkd = compactRequest.encryption_metadata.content_encrypt_key_md;
+      switch (cemkd.raw_encrypt_key_md_type.toLowerCase()) {
+
+        case 'jsonwebkey':
+        case 'json': {
+          // docode the base64 string into a JSON object
+          let v = cemkd.raw_encrypt_key_md;
+          let js = Buffer.from(v, 'base64').toString();
+          let jo = JSON.parse(js);
+          cemkd.raw_encrypt_key_md = jo;
+          break;
+        }
+
+        default: {
+          // just pass thru the raw encrypt key metadata base64 as is do not convert to a json
+          // object
+          break;
+        }
+      }
+
+      serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Encrypt-Created-Encrypt-Request-Post-Expand-Raw',
+                                          msgId: props.msgId,
+                                          data: compactRequest, }, loggingMD);
+
+      //
       // Invoke the obfuscation service to encrypt the items
       //
       let postProps = {};
@@ -177,22 +215,40 @@ let model = {};
 model.createEncryptMetadata = function createEncryptMetadata(props) {
   'use strict';
 
-  /* The format of the external metadata
-  {
-    ‘@id’: “blank node id”,
-    ‘@type: http://pn.schema.webshield.io/type#EncryptMetadata’,
-    ‘https://pn.schema.webshield.io/prop#content_obfuscation_algorithm’:
-    'https://pn.schema.webshield.io/prop#obfuscation_provider':
-    'https://pn.schema.webshield.io/prop#kms': 'kms resource object',
-    'https://pn.schema.webshield.io/prop#content_encrypt_key_md': 'the key resource'
-  }, */
+  /* The compact form
+    { // the header
+      ‘id’: “blank node id”,
+      ‘type: http://pn.schema.webshield.io/type#EncryptMetadata’,
+      ‘content_obfuscation_algorithm’:
+      'obfuscation_provider':
+      'content_encrypt_key_md_jwt': the JWT holding the content encrypt key that is decoded in the content_encrypt_key_md
+      'content_encrypt_key_md': { // a compact version of content encrypt key md
+        'id':
+        'type': EncryptKeyMetadata, Metadata,
+        'raw_encrypt_key_md_type': jsonwebkey, json, or jwt
+        'raw_encrypt_key_md': depends on type, acts as follows
+          'jwt': base64 encoded value
+          'json or jsonwebkey': the object // performed after the jsonld compact has occured
+
+      }
+    },
+    */
 
   let md = {};
   md = JSONLDUtils.createBlankNode({ '@type': PN_T.EncryptMetadata, });
   md[PN_P.contentObfuscationAlgorithm] = props.pai[PN_P.contentObfuscationAlgorithm];
   md[PN_P.obfuscationProvider] = props.pai[PN_P.obfuscationProvider];
-  md[PN_P.kms] = props.kms;
-  md[PN_P.contentEncryptKeyMD] = props.cekmd;
+  md[PN_P.contentEncryptKeyMDJWT] = 'add code to set JWT';
+
+  // create an expanded version that is used as convenience
+  let decodedCEKMD = {
+    '@id': props.cekmd['@id'],
+    '@type': props.cekmd['@type'],
+  };
+
+  decodedCEKMD[PN_P.rawEncryptKeyMDType] = props.cekmd[PN_P.rawEncryptKeyMDType];
+  decodedCEKMD[PN_P.rawEncryptKeyMD] = props.cekmd[PN_P.rawEncryptKeyMD];
+  md[PN_P.contentEncryptKeyMD] = decodedCEKMD;
 
   return md;
 

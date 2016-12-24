@@ -2,6 +2,7 @@
 const assert = require('assert');
 const BaseSubjectPNDataModel = require('data-models/lib/BaseSubjectPNDataModel');
 const JSONLDUtils = require('jsonld-utils/lib/jldUtils').npUtils;
+const EKMDCanons = require('metadata/lib/encryptKeyMetadata').canons;
 const KMSCanons = require('metadata/lib/kms').canons;
 const localTestCanons = require('./utils').canons;
 const HttpStatus = require('http-status');
@@ -67,7 +68,7 @@ describe('PAI Test Privacy Action Instance Executor', function () {
                 msgId: '1',
                 kms: KMSCanons.createTestKMS(props1),
                 os: OSCanons.createTestObfuscationService(props1),
-                cekmd: 'content encrypt key md', };
+                cekmd: EKMDCanons.createTestKey(props1), };
       return paiExecutor.promises.execute(serviceCtx, props)
         .then(function (result) {
           let pgs = result['@graph'];
