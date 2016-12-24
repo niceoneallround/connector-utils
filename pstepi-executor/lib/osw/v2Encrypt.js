@@ -23,7 +23,7 @@ The ENCRYPT REQUEST sent to the External Obfuscation Service - created from past
   '@context': 'JSON LD context',
   'id': ‘ a request id’,
   'type': EncryptRequest,
-  'encryption_metadata':
+  'encryption_metadata'[:
   { // the header
     ‘id’: “blank node id”,
     ‘type: http://pn.schema.webshield.io/type#EncryptMetadata’,
@@ -38,7 +38,7 @@ The ENCRYPT REQUEST sent to the External Obfuscation Service - created from past
         'jwt': base64 encoded value
         'json or jsonwebkey': the object
 
-    }
+    }]
   },
   // Array of items to encrypt, each item has the following fields
   // id - id for the field, in future will be opaque. This is passed back in the response
@@ -152,6 +152,12 @@ utils.execute = function execute(serviceCtx, items, props) {
           // object
           break;
         }
+      }
+
+      // Compact may have converted the encryption metadata from an array to an object
+      // convert so always an array for external services
+      if (!Array.isArray(compactRequest.encryption_metadata)) {
+        compactRequest.encryption_metadata = [compactRequest.encryption_metadata];
       }
 
       serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Encrypt-Created-Encrypt-Request-Post-Expand-Raw',

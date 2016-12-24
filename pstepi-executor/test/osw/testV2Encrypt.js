@@ -106,7 +106,9 @@ describe('v2Encrypt - tests', function () {
               requestBody.should.have.property('type', 'EncryptRequest');
 
               // check expaned key information
-              let cekmd = requestBody.encryption_metadata.content_encrypt_key_md;
+              requestBody.encryption_metadata.length.should.be.equal(1);
+
+              let cekmd = requestBody.encryption_metadata[0].content_encrypt_key_md;
               cekmd.should.have.property('id');
               cekmd.should.have.property('type');
               cekmd.should.have.property('raw_encrypt_key_md_type', 'jsonwebkey');
