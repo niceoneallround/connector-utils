@@ -61,7 +61,7 @@ describe('v2Encrypt - tests', function () {
           result.encryption_metadata.should.have.property('id');
           result.encryption_metadata.should.have.property('type', 'EncryptMetadata');
           result.encryption_metadata.should.have.property('obfuscation_provider');
-          result.encryption_metadata.should.have.property('content_obfuscation_algorithm');
+          result.encryption_metadata.should.have.property('content_obfuscation_algorithm', 'A256GCM');
           result.encryption_metadata.should.have.property('content_encrypt_key_md');
           result.encryption_metadata.should.have.property('content_encrypt_key_md_jwt');
           result.encryption_metadata.should.not.have.property('kms');
