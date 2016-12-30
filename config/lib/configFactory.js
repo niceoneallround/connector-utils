@@ -105,21 +105,22 @@ function create(config) {
   */
 
   c.metadata = {};
-  c.SKIP_STARTUP_CREATE_METADATA = '0';
-  c.metadata.skip_startup_create = false;
   if (process.env.SKIP_STARTUP_CREATE_METADATA) {
     c.SKIP_STARTUP_CREATE_METADATA = process.env.SKIP_STARTUP_CREATE_METADATA;
     if (c.SKIP_STARTUP_CREATE_METADATA === '1') {
       c.metadata.skip_startup_create = true;
     }
-  } else if (config.metadata.skip_startup_create) {
+  } else if ((config.metadata) && (config.metadata.skip_startup_create)) {
     c.SKIP_STARTUP_CREATE_METADATA = '1';
     c.metadata.skip_startup_create = config.metadata.skip_startup_create;
+  } else {
+    c.SKIP_STARTUP_CREATE_METADATA = '0';
+    c.metadata.skip_startup_create = false;
   }
 
   if (process.env.METADATA_FILE) {
     c.metadata.file = process.env.METADATA_FILE;
-  } else if (config.metadata.file) {
+  } else if ((config.metadata) && (config.metadata.file)) {
     c.metadata.file = config.metadata.file;
   }
 
@@ -136,7 +137,7 @@ function create(config) {
   if (process.env.API_GATEWAY_URL) {
     c.API_GATEWAY_URL = process.env.API_GATEWAY_URL;
     c.api_gateway.url = c.API_GATEWAY_URL;
-  } else if (config.api_gateway.url) {
+  } else if ((config.api_gateway) && (config.api_gateway.url)) {
     c.API_GATEWAY_URL = config.api_gateway.url;
     c.api_gateway.url = c.API_GATEWAY_URL;
   }
@@ -144,7 +145,7 @@ function create(config) {
   if (process.env.WEBSHIELD_API_KEY) {
     c.WEBSHIELD_API_KEY = process.env.WEBSHIELD_API_KEY;
     c.api_gateway.webshield_api_key = c.WEBSHIELD_API_KEY;
-  } else if (config.api_gateway.webshield_api_key) {
+  } else if ((config.api_gateway) && (config.api_gateway.webshield_api_key)) {
     c.WEBSHIELD_API_KEY = config.api_gateway.webshield_api_key;
     c.api_gateway.webshield_api_key = c.WEBSHIELD_API_KEY;
   }
