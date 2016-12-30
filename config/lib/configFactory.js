@@ -86,24 +86,6 @@ function create(config) {
     c.PROTOCOL = 'https';
   }
 
-  //-------------
-  // IDENTITY SYNDICATE ENVS - although only used by data connector and
-  // the query connector add here.
-  //------------------------
-
-  c.is = {};
-  if (process.env.IDENTITY_SYNDICATE_POST_SUBJECT_URL) {
-    c.is.post_subject_url = process.env.IDENTITY_SYNDICATE_POST_SUBJECT_URL;
-  } else if (config.is.post_subject_url) {
-    c.is.post_subject_url = config.is.post_subject_url;
-  }
-
-  if (process.env.IDENTITY_SYNDICATE_POST_SUBJECT_QUERY_URL) {
-    c.is.post_subject_query_url = process.env.IDENTITY_SYNDICATE_POST_SUBJECT_QUERY_URL;
-  } else if (config.is.post_subject_query_url) {
-    c.is.post_subject_query_url = config.is.post_subject_query_url;
-  }
-
   //
   // ADD ANY PRIVACY AGENT CONFIGURATION
   //
