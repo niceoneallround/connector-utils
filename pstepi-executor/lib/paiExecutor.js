@@ -2,7 +2,7 @@
 
 const assert = require('assert');
 const JSONLDUtils = require('jsonld-utils/lib/jldUtils').npUtils;
-const obfuscateUtils = require('./obfuscateUtils');
+const obfuscateUtils = require('./utils');
 const PNDataModel = require('data-models/lib/PNDataModel');
 const PN_P = PNDataModel.PROPERTY;
 const v2Encrypt = require('./osw/v2Encrypt');
