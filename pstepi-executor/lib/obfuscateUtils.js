@@ -5,6 +5,7 @@ const JSONLDPromises = require('jsonld-utils/lib/jldUtils').promises;
 const JSONLDUtilsnp = require('jsonld-utils/lib/jldUtils').npUtils;
 const JSONLDUtils = require('jsonld-utils/lib/jldUtils');
 const PNDataModel = require('data-models/lib/PNDataModel');
+const PN_P = PNDataModel.PROPERTY;
 const PN_T = PNDataModel.TYPE;
 const PNOVUtils = require('data-models/lib/PNObfuscatedValue').utils;
 const util = require('util');
@@ -21,11 +22,16 @@ let utils = {}; // expose to support testing
 //---------------------------------------------
 
 //
-// mapData2EncryptItems
+// mapData2EncryptItems - used for both encryption and decryption
 //
-// Process the input graph looking for nodes and fields that need to be obfuscated and if
-// found create an encrypt item for them, returning an array of encrypt items, and a structure
-// that enables the encrypted items to be placed back into the object.
+// - For obfuscate the matching is just based on schema matching type.property in the target subject graphs
+// - For de-obfuscate the matching is based on a combination of schema matching and the @type in the obfuscated value matching mathcin the pai to de-obfuscate
+//
+// Process the input graph looking for nodes and properties that need to be either
+// encrypted or decrypted. Returns
+//  1. an array of the encrypt item json objects, these contain { id, value, nonce, aad } and are passed to the encryption service
+//  2. a map that is keyed on the encrypt item @id and allows the encrypted or decrypted item to be placed back in the object, see below
+//
 //
 // Assumptions
 //  1. Input data is an array of subjects
@@ -39,8 +45,11 @@ let utils = {}; // expose to support testing
 // 4.1 For each json-schema property that is in the subject perform the following
 // 4.1.1 If type is @id or @type skip
 // 4.1.2 If type is not object create an eitem for the fields and add to set of Eitems
+// 4.1.2.1 If OBFUSCATE place the properties value into the encrypt item value field
+// 4.1.2.2 if DEOBFUSCATE - if the values @type match's the pai['@id'] then de-obfuscate
+//            by breaking the @value into its nonce, aad, and value portions and place in the encrypt item
 // 4.1.3 If type is an object, callback on self passed in node and schema
-// 4.2. Return array of encryption items
+// 4.2. Return array of encryption items to send to external service for either encryption or decryption
 //
 // An Encrypt Item has the following fields
 //  - id - an id that is unique within scope of this execution and the obfuscation request
@@ -90,13 +99,12 @@ callbacks.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph
   assert(props, 'mapData2EncryptItems - props param missing');
   assert(props.msgId, 'mapData2EncryptItems - props.msgId param missing');
 
-  console.log(schema);
-  console.log(typeof schema);
   assert(schema.title, util.format('No title in json schema:%j', schema));
   assert(schema.properties, util.format('No properties in json schema:%j', schema));
 
   serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'mapData2EncryptItems-Looking-4-Subjects',
-            msgId: props.msgId, type: schema.title, data: graph, pai: pai['@id'], }, loggingMD);
+            msgId: props.msgId, type: schema.title, paiAction: pai[PN_P.action], pai: pai['@id'],
+            data: graph, }, loggingMD);
 
   let result = {};
   result.eitems = [];
@@ -121,46 +129,56 @@ callbacks.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph
   //
   // Find nodes of type schema.title in the graph
   //
-  JSONLDPromises.frame(graph, schema.title, false)
-  .then(function (matchedNodes) {
-    let subjects;
-    let eitems = [];
-    let eitemsMap = new Map();
+  JSONLDPromises.frame(graph, schema.title, false) // false means just return @id not a copy
+    .then(function (matchedNodes) {
+      let subjects;
+      let eitems = [];
+      let eitemsMap = new Map();
 
-    // convert so always processing an array
-    if (matchedNodes['@graph']) {
-      subjects = matchedNodes['@graph'];
-    } else {
-      subjects = [matchedNodes];
-    }
+      // convert so always processing an array
+      if (matchedNodes['@graph']) {
+        subjects = matchedNodes['@graph'];
+      } else {
+        subjects = [matchedNodes];
+      }
 
-    serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'mapData2EncryptItems-Found-Subjects',
-              msgId: props.msgId, type: schema.title, data: subjects, pai: pai['@id'], }, loggingMD);
+      serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'mapData2EncryptItems-Found-Subjects',
+                msgId: props.msgId, type: schema.title,   paiAction: pai[PN_P.action], pai: pai['@id'],
+                data: subjects, }, loggingMD);
 
-    //
-    // For each matched subject, find the object by its @id in the id2ObjectMap and pass
-    // to routine to see if any fields need encrypting
-    //
-    let conactEitemsMap = function conactEitemsMap(value, key) {
-      eitemsMap.set(key, value);
-    };
+      //
+      // For each matched subject, find the object by its @id in the id2ObjectMap and pass
+      // to routine to see if any fields need encrypting
+      //
+      let conactEitemsMap = function conactEitemsMap(value, key) {
+        eitemsMap.set(key, value);
+      };
 
-    for (let i = 0; i < subjects.length; i++) {
-      let object = id2ObjectMap.get(subjects[i]['@id']);
-      assert(object, util.format('mapData2EncryptItems: Could not find object with id:%s in the id2ObjectMap:%j', subjects[i]['@id'], id2ObjectMap));
+      for (let i = 0; i < subjects.length; i++) {
+        let object = id2ObjectMap.get(subjects[i]['@id']);
+        assert(object, util.format('mapData2EncryptItems: Could not find object with id:%s in the id2ObjectMap:%j', subjects[i]['@id'], id2ObjectMap));
 
-      let result = utils.processOneSubjectMapDataToEncryptItems(serviceCtx, object, schema, pai, { msgId: props.msgId });
-      eitems = eitems.concat(result.eitems);
-      result.eitemsMap.forEach(conactEitemsMap);
-    }
+        let result = utils.processOneSubjectMapDataToEncryptItems(serviceCtx, object, schema, pai, { msgId: props.msgId });
+        eitems = eitems.concat(result.eitems);
+        result.eitemsMap.forEach(conactEitemsMap);
+      }
 
-    return callback(null, { eitems: eitems, eitemsMap: eitemsMap });
-  });
+      return callback(null, { eitems: eitems, eitemsMap: eitemsMap });
+    },
+
+    function (err) {
+      serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'mapData2EncryptItems-Found-Subjects-Frame-ERROR',
+                msgId: props.msgId, type: schema.title,   paiAction: pai[PN_P.action], pai: pai['@id'],
+                err: err, }, loggingMD);
+
+      return callback(err, null);
+
+    });
 
 };
 
 //
-// Process one object using the schema to look for properties that need to be encrypted, returns an array of EItems and
+// Process one object using the schema to look for properties that need to be encrypted or decrypted, returns an array of EItems and
 // a the metadata that is used map the result Eitems back into the object.
 //
 utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapDataToEncryptItems(serviceCtx, object, schema, pai, props) {
@@ -174,7 +192,8 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
 
   serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
             action: 'processOneSubjectMapDataToEncryptItems-Create-values-to-encrypt-array-Start',
-            msgId: props.msgId, subjectId: object['@id'], schemaTitle: schema.title, }, loggingMD);
+            msgId: props.msgId, paiAction: pai[PN_P.action], pai: pai['@id'],
+            subjectId: object['@id'], schemaTitle: schema.title, }, loggingMD);
 
   let keys = Object.keys(schema.properties);
   let eitems = [];
@@ -218,11 +237,35 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
                 serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
                           action: 'processOneSubjectMapDataToEncryptItems-Create-OItem',
                           msgId: props.msgId, subjectId: object['@id'], key: key, keyDesc: keyDesc,
-                          pai: pai['@id'], }, loggingMD);
+                          paiAction: pai[PN_P.action], pai: pai['@id'], }, loggingMD);
 
-                let oitem = PNOVUtils.createOItem(uuid(), pai['@id'], JSONLDUtilsnp.getV(object, key));
-                eitemsMap.set(oitem.id, { id: object['@id'], key: key }); // record info needed to set encrypted value in object
-                eitems.push(oitem);
+                switch (pai[PN_P.action]) {
+
+                  case PN_T.Obfuscate: {
+                    let oitem = PNOVUtils.createOItem(uuid(), pai['@id'], JSONLDUtilsnp.getV(object, key));
+                    eitemsMap.set(oitem.id, { id: object['@id'], key: key }); // record info needed to set encrypted value in object
+                    eitems.push(oitem);
+                    break;
+                  }
+
+                  case PN_T.Deobfuscate: {
+                    // Only de-obfuscate the OV if its @type matches the pai[@id] that we are currently de-obfuscating for.
+                    //
+                    let ov = object[key];
+                    if (JSONLDUtils.isType(ov, pai['@id'])) {
+                      let oitem = PNOVUtils.createOItemFromOV(uuid(), ov);
+                      eitemsMap.set(oitem.id, { id: object['@id'], key: key }); // record info needed to set encrypted value in object
+                      eitems.push(oitem);
+                    }
+
+                    break;
+
+                  }
+
+                  default: {
+                    assert(false, 'PAI action type is not obfuscate or deobfuscate?:%j', pai);
+                  }
+                }
               }
             }
           } // switch key.type
@@ -236,7 +279,7 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
           serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
                     action: 'processOneSubjectMapDataToEncryptItems-Embedded-Object',
                     msgId: props.msgId, subjectId: object['@id'], key: key, embedObject: embedObject, embedSchema: embedSchema,
-                    pai: pai['@id'], }, loggingMD);
+                    paiAction: pai[PN_P.action], pai: pai['@id'], }, loggingMD);
 
           assert(embedObject, util.format('mapData2EncryptItems: Could not find emded object with key%s in the object:%j', key, object));
           let embeddedResult = utils.processOneSubjectMapDataToEncryptItems(
@@ -264,8 +307,9 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
 //
 // createNodesBasedOnEitemMap
 //
-// Creates new nodes with just the fields that are in the passed eitems maps. The
-// eitems map contains the node @id and any fields of that node that have either
+// Creates a new JSONLD subject object that has just the properties that are in the passed eitems maps and the corresponding eitems.
+//
+// The eitems map contains the node @id and any fields of that node that have either
 // been obfuscated or de-obfuscated.
 //
 // The input eitems to build the provacy graph from are of the format
@@ -278,14 +322,14 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
 //
 // Performs the following
 //
-// Create an the output nodes with just an @id and @type as follows
-// 1. For each source node that has a type that matches the obfuscation schema type perform the following
+// Create a new skeleton JSON LD subject with just an @id and @type from the sourceSubjects
+// 1. For each source node that has a type that matches the obfuscation/de-obfuscation schema type perform the following
 // 1.1 create a new node
 // 1.2 Copy across the @id
 // 1.3 Copy across the @type
-// 1.4 if obfuscate add pn_t.PrivacyNode to the @type
+// 1.4 if OBFUSCATE add pn_t.PrivacyNode to the @type
 //
-// For each node in the encrypyed fields map peform the following
+// Populated the new skeleton subject as follows
 // 1. Find the node by @id in the output nodes map
 // 2. If !mapValue.embedKey
 // 2.1 If the sourceNode[mapValue.key] is a scalar
@@ -326,27 +370,27 @@ callbacks.createNodesBasedOnEitemMap = function createNodesBasedOnEitemMap(servi
   assert(props.msgId, 'createNodesBasedOnEitemMap - props.msgId param missing');
 
   serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'createNodesBasedOnEitemMap-START',
-            msgId: props.msgId, eitemsLength: eitems.length, pai: pai['@id'], }, loggingMD);
+            msgId: props.msgId, eitemsLength: eitems.length, paiAction: pai[PN_P.action], pai: pai['@id'], }, loggingMD);
 
   //
-  // Create a map of @id to subjects in source graph - first map to an array as easier to process
+  // Create a map of @id to subjects in source graph - these may be all obfuscated or all de-obfuscates subjects
   //
-  let t;
+  let sourceSubjects;
   if (sourceGraph['@graph']) {
-    t = sourceGraph['@graph'];
+    sourceSubjects = sourceGraph['@graph'];
   } else if (Array.isArray(sourceGraph)) {
-    t = sourceGraph;
+    sourceSubjects = sourceGraph;
   } else {
-    t = [sourceGraph];
+    sourceSubjects = [sourceGraph];
   }
 
   let sourceOM = new Map();
-  for (let i = 0; i < t.length; i++) {
-    sourceOM.set(t[i]['@id'], t[i]);
+  for (let i = 0; i < sourceSubjects.length; i++) {
+    sourceOM.set(sourceSubjects[i]['@id'], sourceSubjects[i]);
   }
 
-  let privacyGraphs = [];
-  let privacyGraphMap = new Map();
+  let outputSubjects = [];
+  let outputSubjectsMap = new Map();
 
   //
   // process the array of items as described above
@@ -361,32 +405,45 @@ callbacks.createNodesBasedOnEitemMap = function createNodesBasedOnEitemMap(servi
     let sourceNode = sourceOM.get(mapValue.id);
     assert(sourceNode, util.format('No Source Node for @id:%s in MapValue:%j for items:%s', mapValue.id, mapValue, eitems[i].id));
 
-    // find the privacy graph that creating from this source Node and items
-    let privacyGraph = privacyGraphMap.get(sourceNode['@id']);
+    // if no output graph create one and add to set of outputs
+    let outputSubject = outputSubjectsMap.get(sourceNode['@id']);
+    if (!outputSubject) {
+      outputSubject = { '@id': sourceNode['@id'], '@type': sourceNode['@type'] };
 
-    // if no privacy graph create one and add to set of pgs
-    if (!privacyGraph) {
-      privacyGraph = { '@id': sourceNode['@id'], '@type': sourceNode['@type'] };
-      JSONLDUtils.addType2Node(privacyGraph, PN_T.PrivacyGraph);
-      privacyGraphs.push(privacyGraph);
-      privacyGraphMap.set(privacyGraph['@id'], privacyGraph);
-      serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'createNodesBasedOnEitemMap-CREATE-NEW-PRIVACY-GRAPH',
-                msgId: props.msgId, privacyGraph: privacyGraph, pai: pai['@id'], }, loggingMD);
+      if (pai[PN_P.action] === PN_T.Obfuscate) { // if obfuscate then making a Privacty Graph so mark
+        JSONLDUtils.addType2Node(outputSubject, PN_T.PrivacyGraph);
+      }
+
+      outputSubjects.push(outputSubject);
+      outputSubjectsMap.set(outputSubject['@id'], outputSubject);
+      serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'createNodesBasedOnEitemMap-CREATE-NEW-OUTPUT-GRAPH',
+                msgId: props.msgId, outputSubject: outputSubject, paiAction: pai[PN_P.action], pai: pai['@id'], }, loggingMD);
     }
 
-    // Find Obfuscated Value
-    assert(eitems[i].ov, util.format('createNodesBasedOnEitemMap: item does not have an ov property:%j', eitems[i]));
-    let ov = eitems[i].ov;
+    // going to populate the graph with results from either an obfuscation or a de-obfuscation.
+    // this is very tied to the obfuscate/deobfuscate utils in OSW directory
+    let propValue = null;
+    if (pai[PN_P.action] === PN_T.Obfuscate) {
+      assert(eitems[i].ov, util.format('createNodesBasedOnEitemMap: item does not have an ov property:%j', eitems[i]));
+      propValue = eitems[i].ov;
+    } else {
+      assert(eitems[i].v, util.format('createNodesBasedOnEitemMap: item does not have a v property:%j', eitems[i]));
+      propValue = eitems[i].v;
+    }
+
     if (!mapValue.embedKey) {
 
-      if (sourceNode[mapValue.key]) {
+      if (sourceNode[mapValue.key]) { // if the source node contains the property
 
         if (Array.isArray(sourceNode[mapValue.key])) {
           assert(false, util.format('createNodesBasedOnEitemMap - Cannot handle array:%j', mapValue));
-        } else if (sourceNode[mapValue.key['@value']]) {
-          privacyGraph[mapValue.key] = { '@type': sourceNode[mapValue.key]['@type'], '@value': ov };
         } else {
-          privacyGraph[mapValue.key] = ov;
+          //
+          // - FIXME If the source node properties value is already of the format ('@type', @value) then in the
+          // non obfuscate case not sure how to handle @type as will get lost through the ecnrypt/decrypt. Need to track
+          // - FIXME Also i feel loose information if keep envelop encrypt, as decrypt just populating the
+          // v not the nonce and aad. Need to track.
+          outputSubject[mapValue.key] = propValue; // normal case
         }
       } // key is in source node
     } else {
@@ -399,9 +456,9 @@ callbacks.createNodesBasedOnEitemMap = function createNodesBasedOnEitemMap(servi
                   util.format('Embbed node @id:%s does not match the mapVale.embed.id:%s for sourceNode:%s for mapValue:%j',
                       sourceEmbedNode['@id'], mapValue.embed.id, sourceNode['@id'], mapValue));
 
-      if (!privacyGraph[mapValue.embedKey]) {
-        // need to create embed node
-        privacyGraph[mapValue.embedKey] = {
+      // if output subject does not yet have the emedded object then create
+      if (!outputSubject[mapValue.embedKey]) {
+        outputSubject[mapValue.embedKey] = {
           '@id': sourceEmbedNode['@id'],
           '@type': sourceEmbedNode['@type'],
         };
@@ -409,19 +466,22 @@ callbacks.createNodesBasedOnEitemMap = function createNodesBasedOnEitemMap(servi
 
       if (Array.isArray(sourceEmbedNode[mapValue.embed.key])) {
         assert(false, util.format('createNodesBasedOnEitemMap - Cannot handle array:%j', mapValue));
-      } else if (sourceNode[mapValue.embed.key['@value']]) {
-        privacyGraph[mapValue.embedKey][mapValue.embed.key] = { '@type': sourceNode[mapValue.embed.key]['@type'], '@value': ov };
       } else {
-        privacyGraph[mapValue.embedKey][mapValue.embed.key] = ov;
+        //
+        // - FIXME If the source node properties value is already of the format ('@type', @value) then in the
+        // non obfuscate case not sure how to handle @type as will get lost through the encrypt/decrypt. Need to track
+        // - FIXME Also i feel loose information if keep envelop encrypt, as decrypt just populating the
+        // v not the nonce and aad. Need to track.
+        outputSubject[mapValue.embedKey][mapValue.embed.key] = propValue;
       }
     }
 
   }
 
   serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'createNodesBasedOnEitemMap-COMPLETED',
-            msgId: props.msgId, data: privacyGraphs, }, loggingMD);
+            msgId: props.msgId, paiAction: pai[PN_P.action], pai: pai['@id'], data: outputSubjects, }, loggingMD);
 
-  return callback(null, { privacyGraphs: privacyGraphs });
+  return callback(null, { privacyGraphs: outputSubjects });
 
 };
 
