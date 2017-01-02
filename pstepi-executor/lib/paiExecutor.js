@@ -2,7 +2,7 @@
 
 const assert = require('assert');
 const JSONLDUtils = require('jsonld-utils/lib/jldUtils').npUtils;
-const obfuscateUtils = require('./utils');
+const eitemUtils = require('./eitemUtils');
 const PNDataModel = require('data-models/lib/PNDataModel');
 const PN_P = PNDataModel.PROPERTY;
 const v2Encrypt = require('./osw/v2Encrypt');
@@ -91,7 +91,7 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
   //
   // Create the set of eitems that need to be passed to the obfuscation service
   //
-  let promiseItems2Obfuscate = obfuscateUtils.promises.mapData2EncryptItems(serviceCtx, data, schema, props.pai, props);
+  let promiseItems2Obfuscate = eitemUtils.promises.mapData2EncryptItems(serviceCtx, data, schema, props.pai, props);
 
   // obfuscate the items
   let promiseObfuscatedItems = promiseItems2Obfuscate
@@ -112,7 +112,7 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
       // create the privacy graphs based on the results from the obfuscation service
       // note these only contain nodes that should be obfuscated
       //
-      return obfuscateUtils.promises.createNodesBasedOnEitemMap(
+      return eitemUtils.promises.createNodesBasedOnEitemMap(
                 serviceCtx, encryptedOitems['@graph'],
                 rCtx.makeItemsResult.eitemsMap, data, props.pai, props);
     });
