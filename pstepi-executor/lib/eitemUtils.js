@@ -103,7 +103,8 @@ callbacks.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph
   assert(schema.properties, util.format('No properties in json schema:%j', schema));
 
   serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'mapData2EncryptItems-Looking-4-Subjects',
-            msgId: props.msgId, type: schema.title, paiAction: pai[PN_P.action], pai: pai['@id'],
+            msgId: props.msgId, type: schema.title, paiAction: pai[PN_P.action],
+            pai: pai['@id'], pai2Deobfuscate: pai[PN_P.privacyActionInstance2Deobfuscate],
             data: graph, }, loggingMD);
 
   let result = {};
@@ -143,7 +144,8 @@ callbacks.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph
       }
 
       serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'mapData2EncryptItems-Found-Subjects',
-                msgId: props.msgId, type: schema.title,   paiAction: pai[PN_P.action], pai: pai['@id'],
+                msgId: props.msgId, type: schema.title,
+                paiAction: pai[PN_P.action], pai: pai['@id'], pai2Deobfuscate: pai[PN_P.privacyActionInstance2Deobfuscate],
                 data: subjects, }, loggingMD);
 
       //
@@ -168,7 +170,8 @@ callbacks.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph
 
     function (err) {
       serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'mapData2EncryptItems-Found-Subjects-Frame-ERROR',
-                msgId: props.msgId, type: schema.title,   paiAction: pai[PN_P.action], pai: pai['@id'],
+                msgId: props.msgId, type: schema.title, paiAction: pai[PN_P.action],
+                pai: pai['@id'], pai2Deobfuscate: pai[PN_P.privacyActionInstance2Deobfuscate],
                 err: err, }, loggingMD);
 
       return callback(err, null);
@@ -179,7 +182,7 @@ callbacks.mapData2EncryptItems = function mapData2EncryptItems(serviceCtx, graph
 
 //
 // Process one object using the schema to look for properties that need to be encrypted or decrypted, returns an array of EItems and
-// a the metadata that is used map the result Eitems back into the object.
+// the metadata that is used map the result Eitems back into the object.
 //
 utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapDataToEncryptItems(serviceCtx, object, schema, pai, props) {
   'use strict';
@@ -192,7 +195,8 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
 
   serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
             action: 'processOneSubjectMapDataToEncryptItems-Create-values-to-encrypt-array-Start',
-            msgId: props.msgId, paiAction: pai[PN_P.action], pai: pai['@id'],
+            msgId: props.msgId, paiAction: pai[PN_P.action],
+            pai: pai['@id'], pai2Deobfuscate: pai[PN_P.privacyActionInstance2Deobfuscate],
             subjectId: object['@id'], schemaTitle: schema.title, }, loggingMD);
 
   let keys = Object.keys(schema.properties);
@@ -237,11 +241,14 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
                 serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
                           action: 'processOneSubjectMapDataToEncryptItems-Create-OItem',
                           msgId: props.msgId, subjectId: object['@id'], key: key, keyDesc: keyDesc,
-                          paiAction: pai[PN_P.action], pai: pai['@id'], }, loggingMD);
+                          paiAction: pai[PN_P.action], pai: pai['@id'],
+                          pai2Deobfuscate: pai[PN_P.privacyActionInstance2Deobfuscate], }, loggingMD);
 
                 switch (pai[PN_P.action]) {
 
                   case PN_T.Obfuscate: {
+                    // create a json object that contains a id, the paiId and the value to encrypt.
+                    // FUTURE add nonce and aad if needed.
                     let oitem = PNOVUtils.createOItem(uuid(), pai['@id'], JSONLDUtilsnp.getV(object, key));
                     eitemsMap.set(oitem.id, { id: object['@id'], key: key }); // record info needed to set encrypted value in object
                     eitems.push(oitem);
@@ -249,11 +256,14 @@ utils.processOneSubjectMapDataToEncryptItems = function processOneSubjectMapData
                   }
 
                   case PN_T.Deobfuscate: {
+                    //
                     // Only de-obfuscate the OV if its @type matches the pai[@id] that we are currently de-obfuscating for.
+                    // Note the one we are de-obfuscating is recorded in a different field
                     //
                     let ov = object[key];
-                    if (JSONLDUtils.isType(ov, pai['@id'])) {
+                    if (JSONLDUtils.isType(ov, pai[PN_P.privacyActionInstance2Deobfuscate])) {
                       let oitem = PNOVUtils.createOItemFromOV(uuid(), ov);
+                      oitem.type = pai['@id']; // need to set the type to pai we are processing to decrypt a previous pai, as this is what is being executed
                       eitemsMap.set(oitem.id, { id: object['@id'], key: key }); // record info needed to set encrypted value in object
                       eitems.push(oitem);
                     }
@@ -423,13 +433,8 @@ callbacks.createNodesBasedOnEitemMap = function createNodesBasedOnEitemMap(servi
     // going to populate the graph with results from either an obfuscation or a de-obfuscation.
     // this is very tied to the obfuscate/deobfuscate utils in OSW directory
     let propValue = null;
-    if (pai[PN_P.action] === PN_T.Obfuscate) {
-      assert(eitems[i].ov, util.format('createNodesBasedOnEitemMap: item does not have an ov property:%j', eitems[i]));
-      propValue = eitems[i].ov;
-    } else {
-      assert(eitems[i].v, util.format('createNodesBasedOnEitemMap: item does not have a v property:%j', eitems[i]));
-      propValue = eitems[i].v;
-    }
+    assert(eitems[i].result, util.format('createNodesBasedOnEitemMap: item does not have a result property:%j', eitems[i]));
+    propValue = eitems[i].result;
 
     if (!mapValue.embedKey) {
 

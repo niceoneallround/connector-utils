@@ -129,7 +129,7 @@ describe('OBFUSCATE - test obfuscate utils for obfuscation', function () {
 
     it('3.2 should return a privacy graph for the node if has a non embeded eitem for the node ', function () {
 
-      let eitems = [{ id: 'ei1', ov: { '@type': 'pai-id', '@value': 'cipher1', } }];
+      let eitems = [{ id: 'ei1', result: { '@type': 'pai-id', '@value': 'cipher1', } }];
       let eitemsMap = new Map();
       eitemsMap.set('ei1', { id: alice['@id'], key: BASE_P.givenName });
 
@@ -152,7 +152,7 @@ describe('OBFUSCATE - test obfuscate utils for obfuscation', function () {
 
     it('3.3 should return a privacy graph for the node if has an embeded eitem for the node ', function () {
 
-      let eitems = [{ id: 'ei1', ov: { '@type': 'pai-id', '@value': 'cipher1', } }];
+      let eitems = [{ id: 'ei1', result: { '@type': 'pai-id', '@value': 'cipher1', } }];
       let eitemsMap = new Map();
       console.log('3.3 ALICE: %j', alice);
       eitemsMap.set('ei1', { id: alice['@id'], embedKey: BASE_P.address,
@@ -179,8 +179,8 @@ describe('OBFUSCATE - test obfuscate utils for obfuscation', function () {
     it('3.4 should return a privacy graph for the node if has a multipe eitems for node', function () {
 
       let eitems = [
-          { id: 'ei1', ov: { '@type': 'pai-id', '@value': 'cipher1', }, },
-          { id: 'ei2', ov: { '@type': 'pai-id', '@value': 'cipher2', }, },
+          { id: 'ei1', result: { '@type': 'pai-id', '@value': 'cipher1', }, },
+          { id: 'ei2', result: { '@type': 'pai-id', '@value': 'cipher2', }, },
         ];
       let eitemsMap = new Map();
       eitemsMap.set('ei1', { id: alice['@id'], key: BASE_P.givenName });
@@ -212,8 +212,8 @@ describe('OBFUSCATE - test obfuscate utils for obfuscation', function () {
     it('3.5 should return a privacy graph for each source node if pass more than one source node and eitems for them', function () {
 
       let eitems = [
-        { id: 'ei1', ov: { '@type': 'encrypt-md-type', '@value': 'cipher', }, },
-        { id: 'ei2', ov: { '@type': 'encrypt-md-type', '@value': 'cipher', }, },
+        { id: 'ei1', result: { '@type': 'encrypt-md-type', '@value': 'cipher', }, },
+        { id: 'ei2', result: { '@type': 'encrypt-md-type', '@value': 'cipher', }, },
       ];
       let eitemsMap = new Map();
       eitemsMap.set('ei1', { id: alice['@id'], key: BASE_P.givenName });

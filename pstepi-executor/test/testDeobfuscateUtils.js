@@ -24,7 +24,8 @@ describe('DEOBFUSCATE - test obfuscate utils for deobfuscation', function () {
   let serviceCtx;
   let fakePai = {
       '@id': 'http://paId-1',
-      [PN_P.action]: PN_T.Deobfuscate, };
+      [PN_P.action]: PN_T.Deobfuscate,
+      [PN_P.privacyActionInstance2Deobfuscate]: 'http://pai-2-deob-id', };
 
   before(function (done) {
     testUtils.createDummyServiceCtx({ name: 'dummyName' }, function (ctx) {
@@ -145,7 +146,7 @@ describe('DEOBFUSCATE - test obfuscate utils for deobfuscation', function () {
 
     it('3.2 should return an ouput graph with deobfuscated value for the node if has a non embeded eitem for the node ', function () {
 
-      let eitems = [{ id: 'ei1', v: 'clear-text' }];
+      let eitems = [{ id: 'ei1', result: 'clear-text' }];
       let eitemsMap = new Map();
       eitemsMap.set('ei1', { id: alice['@id'], key: BASE_P.givenName });
 
@@ -165,7 +166,7 @@ describe('DEOBFUSCATE - test obfuscate utils for deobfuscation', function () {
 
     it('3.3 should return an output graph for the node if has an embeded eitem for the node ', function () {
 
-      let eitems = [{ id: 'ei1', v: 'cleat-text' }];
+      let eitems = [{ id: 'ei1', result: 'cleat-text' }];
       let eitemsMap = new Map();
       console.log('3.3 ALICE: %j', alice);
       eitemsMap.set('ei1', { id: alice['@id'], embedKey: BASE_P.address,
@@ -190,8 +191,8 @@ describe('DEOBFUSCATE - test obfuscate utils for deobfuscation', function () {
     it('3.4 should return an output graph for the node if has a multipe eitems for node', function () {
 
       let eitems = [
-          { id: 'ei1', v: 'clear-text1', },
-          { id: 'ei2', v: 'cleat-text2', },
+          { id: 'ei1', result: 'clear-text1', },
+          { id: 'ei2', result: 'cleat-text2', },
         ];
       let eitemsMap = new Map();
       eitemsMap.set('ei1', { id: alice['@id'], key: BASE_P.givenName });
@@ -218,8 +219,8 @@ describe('DEOBFUSCATE - test obfuscate utils for deobfuscation', function () {
     it('3.5 should return a output graph for each source node if pass more than one source node and eitems for them', function () {
 
       let eitems = [
-        { id: 'ei1', v: 'clear-text', },
-        { id: 'ei2', v: 'clear-text', },
+        { id: 'ei1', result: 'clear-text', },
+        { id: 'ei2', result: 'clear-text', },
       ];
       let eitemsMap = new Map();
       eitemsMap.set('ei1', { id: alice['@id'], key: BASE_P.givenName });
@@ -245,14 +246,14 @@ describe('DEOBFUSCATE - test obfuscate utils for deobfuscation', function () {
     // Do not care what the nonce and value are so make all the same as easier to check
     //
     subject[BASE_P.givenName] = PNOVUtils.createOVFromOItem(
-                { type: fakePai['@id'], v: 'v1', n: 'n1', });
+                { type: fakePai[PN_P.privacyActionInstance2Deobfuscate], v: 'v1', n: 'n1', });
 
     subject[BASE_P.familyName] = PNOVUtils.createOVFromOItem(
-                { type: fakePai['@id'], v: 'v1', n: 'n1', });
+                { type: fakePai[PN_P.privacyActionInstance2Deobfuscate], v: 'v1', n: 'n1', });
 
     // add an embedded object
     subject[BASE_P.address][BASE_P.postalCode] = PNOVUtils.createOVFromOItem(
-                { type: fakePai['@id'], v: 'v1', n: 'n1', });
+                { type: fakePai[PN_P.privacyActionInstance2Deobfuscate], v: 'v1', n: 'n1', });
 
   }
 

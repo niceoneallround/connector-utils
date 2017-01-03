@@ -39,6 +39,7 @@
     "http-status": "^0.2.3",
     "js-yaml": "^3.6.1",
     "jwt-utils": "git://github.com/niceoneallround/jwt-utils.git",
+    "lodash": "^4.17.4",
     "metadata": "git://github.com/niceoneallround/metadata.git",
     "moment": "^2.16.0",
     "node-utils": "git://github.com/niceoneallround/node-utils.git",

@@ -1,3 +1,5 @@
+/*jslint node: true, vars: true */
+
 /*
 
 Returns a promise containing the encrypted items after calling a v2 protocol encrypt
@@ -23,23 +25,7 @@ The ENCRYPT REQUEST sent to the External Obfuscation Service - created from past
   '@context': 'JSON LD context',
   'id': ‘ a request id’,
   'type': EncryptRequest,
-  'encryption_metadata'[:
-  { // the header
-    ‘id’: “blank node id”,
-    ‘type: http://pn.schema.webshield.io/type#EncryptMetadata’,
-    ‘content_obfuscation_algorithm’:
-    'obfuscation_provider':
-    'content_encrypt_key_md_jwt': the JWT holding the content encrypt key that is decoded in the content_encrypt_key_md
-    'content_encrypt_key_md': { // a compact version of content encrypt key md
-      'id':
-      'type': EncryptKeyMetadata, Metadata,
-      'raw_encrypt_key_md_type': jsonwebkey, json, or jwt
-      'raw_encrypt_key_md': depends on type, acts as follows
-        'jwt': base64 encoded value
-        'json or jsonwebkey': the object
-
-    }]
-  },
+  'encryption_metadata'[ <encrypt metadata>]
   // Array of items to encrypt, each item has the following fields
   // id - id for the field, in future will be opaque. This is passed back in the response
   // type - the encrypt metadata that should be used - indicates what encryption to use and the key to use
@@ -94,6 +80,8 @@ const PN_T = PNDataModel.TYPE;
 const PNOVUtils = require('data-models/lib/PNObfuscatedValue').utils;
 const requestWrapperPromises = require('node-utils/requestWrapper/lib/requestWrapper').promises;
 const util = require('util');
+const v2EncryptMetadata = require('./v2EncryptMetadata');
+const _ = require('lodash');
 
 let utils = {};
 
@@ -105,7 +93,7 @@ let utils = {};
 // props.cekmd - content encrypt key metadata
 // props.pai - privacy action instance
 //
-// returns an array of {id: the one passed in, value: { PN Obfuscated Value}}
+// returns an array of {id: the one passed in, result: { PN Obfuscated Value}}
 //  Note the PN Obfuscated value @value is already encoded correctly, and @type is set to passed in pai @id
 //
 utils.execute = function execute(serviceCtx, items, props) {
@@ -176,6 +164,7 @@ utils.execute = function execute(serviceCtx, items, props) {
       return requestWrapperPromises.postJSON(postProps);
     });
 
+  // process the result from the obfuscation service
   return promiseEncryptResult
     .then(
       function (response) {
@@ -189,9 +178,10 @@ utils.execute = function execute(serviceCtx, items, props) {
         let items = body.items;
         let encryptedItems = [];
         for (let i = 0; i < items.length; i++) {
+          // note assumes the values have all been base encoded already - so does nothing.
           encryptedItems.push({
             id: items[i].id,
-            ov: PNOVUtils.createOVFromOItem({ type: props.pai['@id'], v: items[i].v, n: items[i].n, aad: items[i].aad, }), // create Obfuscated Value
+            result: PNOVUtils.createOVFromOItem({ type: props.pai['@id'], v: items[i].v, n: items[i].n, aad: items[i].aad, }), // create Obfuscated Value
           });
         }
 
@@ -217,66 +207,29 @@ utils.execute = function execute(serviceCtx, items, props) {
 
 let model = {};
 
-// create encrypt metadata that is passed to the external service
-model.createEncryptMetadata = function createEncryptMetadata(props) {
-  'use strict';
-
-  /* The compact form
-    { // the header
-      ‘id’: “blank node id”,
-      ‘type: http://pn.schema.webshield.io/type#EncryptMetadata’,
-      ‘content_obfuscation_algorithm’:
-      'obfuscation_provider':
-      'content_encrypt_key_md_jwt': the JWT holding the content encrypt key that is decoded in the content_encrypt_key_md
-      'content_encrypt_key_md': { // a compact version of content encrypt key md
-        'id':
-        'type': EncryptKeyMetadata, Metadata,
-        'raw_encrypt_key_md_type': jsonwebkey, json, or jwt
-        'raw_encrypt_key_md': depends on type, acts as follows
-          'jwt': base64 encoded value
-          'json or jsonwebkey': the object // performed after the jsonld compact has occured
-
-      }
-    },
-    */
-
-  let md = {};
-  md = JSONLDUtils.createBlankNode({ '@type': PN_T.EncryptMetadata, });
-  md[PN_P.contentObfuscationAlgorithm] = props.pai[PN_P.contentObfuscationAlgorithm];
-  md[PN_P.obfuscationProvider] = props.pai[PN_P.obfuscationProvider];
-  md[PN_P.contentEncryptKeyMDJWT] = 'add code to set JWT';
-
-  // create an expanded version that is used as convenience
-  let decodedCEKMD = {
-    '@id': props.cekmd['@id'],
-    '@type': props.cekmd['@type'],
-  };
-
-  decodedCEKMD[PN_P.rawEncryptKeyMDType] = props.cekmd[PN_P.rawEncryptKeyMDType];
-  decodedCEKMD[PN_P.rawEncryptKeyMD] = props.cekmd[PN_P.rawEncryptKeyMD];
-  md[PN_P.contentEncryptKeyMD] = decodedCEKMD;
-
-  return md;
-
-};
-
-// create encrypt items that are sent to teh service
+//
+// create encrypt items that are sent to the service
+//
+// The information is represented as follows
+//
+// value - a string in the jsonld graph, is converted into a base64(byte[])
+// nonce - a byte[] is converted into a base64(byte[])
+// aad - a string such as @id, is converted into a base64(byte[])
+//
+//
+//   The jsonld compact format of external items is the following, this returns the expanded version
+//
+// { ‘id’ : ‘an id', ‘type’: ‘http://.../md-1’, ‘v’ : base64(bytes[]) , n: base64(bytes[], aad: base64(bytes[]},
+//
 model.createEncryptItems = function createEncryptItems(items, encryptMetadata) {
   'use strict';
 
-  /*
-
-    For obfuscate, assume that the based in value is string that needs to be converted to a byte array that will be
-    base64 encoded. Note if this was a multi step then may alrady be in the correct format. In future can add props to control
-
-    The jsonld compact format of external items is the following, this returns the expanded version
-
-    { ‘id’ : ‘an id', ‘type’: ‘http://.../md-1’, ‘v’ : base64(bytes[]) , n: base64(bytes[], aad: base64(bytes[]},
-
-  */
-
   let result = [];
   for (let i = 0; i < items.length; i++) {
+
+    assert(_.isString(items[i].v), util.format('createEncryptItems can only handle string values:%j', items[i]));
+    assert(_.isNil(items[i].n), util.format('createEncryptItems cannot yet handle nonce:%j', items[i]));
+    assert(_.isNil(items[i].aad), util.format('createEncryptItems cannot yet handle aad:%j', items[i]));
 
     let ei = { '@id': items[i].id, '@type': encryptMetadata['@id'], };
 
@@ -298,7 +251,7 @@ model.promiseCompactEncryptRequest = function promiseCompactEncryptRequest(items
   // Create the external encryptMetadata that needs to be sent to the external service
   // these are blank nodes created just for this call
   //
-  eRequest[PN_P.encryptionMetadata] = model.createEncryptMetadata(props);
+  eRequest[PN_P.encryptionMetadata] = v2EncryptMetadata.create(props);
 
   //
   // Create the external item information from the passed in items and set

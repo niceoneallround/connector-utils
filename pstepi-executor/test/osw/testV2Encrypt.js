@@ -28,7 +28,7 @@ describe('v2Encrypt - tests', function () {
   props.pai = pstepI[PN_P.privacyActionInstance][0]; // set to canon privacy action instance
   props.cekmd = EKMDCanons.createTestKey({ hostname: 'hostname', domainName: 'domainName', });
 
-  console.log(props.pai);
+  //console.log(props.pai);
 
   let items = [];
   items.push(PNOVUtils.createOItem('id1', 'type1', 'value1'));
@@ -126,13 +126,13 @@ describe('v2Encrypt - tests', function () {
         let items = result['@graph'];
         items.length.should.equal(2);
         items[0].should.have.property('id', 'id1');
-        items[0].should.have.property('ov');
-        items[0].ov.should.have.property('@type', props.pai['@id']);
-        items[0].ov.should.have.property('@value');
+        items[0].should.have.property('result');
+        items[0].result.should.have.property('@type', props.pai['@id']);
+        items[0].result.should.have.property('@value');
         items[1].should.have.property('id', 'id2');
-        items[1].should.have.property('ov');
-        items[1].ov.should.have.property('@type', props.pai['@id']);
-        items[1].ov.should.have.property('@value');
+        items[1].should.have.property('result');
+        items[1].result.should.have.property('@type', props.pai['@id']);
+        items[1].result.should.have.property('@value');
       });
     }); //it 2.1
   }); // describe 2
