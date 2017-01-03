@@ -29,6 +29,29 @@ canons.encryptResponse = function encryptResponse(inputItems) {
 
 };
 
+// creates a canon response from passed in items
+canons.decryptResponse = function decryptResponse(inputItems) {
+  'use strict';
+
+  let canonRsp = {
+    id: '_:1',
+    type: 'DecryptResponse',
+    responding_to: 'response-id',
+    items: [], };
+
+  for (let j = 0; j < inputItems.length; j++) {
+    let stringV =  Buffer.from(inputItems[j].v, 'base64').toString(); // convert input value to string
+    canonRsp.items.push({
+      id: inputItems[j].id,
+      type: inputItems[j].type,
+      v: Buffer.from('clear-text-' + stringV).toString('base64'),
+    });
+  }
+
+  return canonRsp;
+
+};
+
 module.exports = {
   canons: canons,
 };

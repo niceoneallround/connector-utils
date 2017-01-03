@@ -54,6 +54,39 @@ model.create = function create(props) {
 
 };
 
+//
+// compactEMD - the jsonld compact representation of the encrypt metadata
+//
+// As a convenience if the raw_encrypt_key_md is a JSON or JSONWebKey type then
+// expand it for the caller, need to do here to ensure compact does not remove
+// any non URL props or types
+//
+model.addUnpackedContentEncryptKey = function addUnpackedContentEncryptKey(compactEMD) {
+  'use strict';
+  assert(compactEMD, 'addUnpackedContentEncryptKey compactEMD param is missing');
+
+  let cemkd = compactEMD.content_encrypt_key_md;
+  switch (cemkd.raw_encrypt_key_md_type.toLowerCase()) {
+
+    case 'jsonwebkey':
+    case 'json': {
+      // docode the base64 string into a JSON object
+      let v = cemkd.raw_encrypt_key_md;
+      let js = Buffer.from(v, 'base64').toString();
+      let jo = JSON.parse(js);
+      cemkd.raw_encrypt_key_md = jo;
+      break;
+    }
+
+    default: {
+      // just pass thru the raw encrypt key metadata base64 as is do not convert to a json
+      // object
+      break;
+    }
+  }
+};
+
 module.exports = {
   create: model.create,
+  addUnpackedContentEncryptKey: model.addUnpackedContentEncryptKey,
 };

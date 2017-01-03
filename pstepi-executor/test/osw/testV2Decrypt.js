@@ -2,7 +2,7 @@
 const assert = require('assert');
 const nock = require('nock');
 const HttpStatus = require('http-status');
-const v2Encrypt = require('../../lib/osw/v2Encrypt');
+const v2Decrypt = require('../../lib/osw/v2Decrypt');
 const EKMDCanons = require('metadata/lib/encryptKeyMetadata').canons;
 const KMSCanons = require('metadata/lib/kms').canons;
 const OSCanons = require('metadata/lib/obfuscationService').canons;
@@ -15,7 +15,7 @@ const testUtils = require('node-utils/testing-utils/lib/utils');
 const localTestCanons = require('../utils').canons;
 const util = require('util');
 
-describe('v2Encrypt - tests', function () {
+describe('v2Decrypt - tests', function () {
   'use strict';
 
   let dummyServiceCtx;
@@ -31,8 +31,10 @@ describe('v2Encrypt - tests', function () {
   //console.log(props.pai);
 
   let items = [];
-  items.push(PNOVUtils.createOItem('id1', 'type1', 'value1'));
-  items.push(PNOVUtils.createOItem('id2', 'type2', 'value2'));
+
+  // the  values need to be base 64 encoded strings
+  items.push(PNOVUtils.createOItem('id1', 'type1', Buffer.from('cipher-value').toString('base64'), { n: 'nonce1', }));
+  items.push(PNOVUtils.createOItem('id2', 'type2', Buffer.from('cipher-value').toString('base64'), { n: 'nonce2', }));
 
   before(function (done) {
     let props = {};
@@ -49,12 +51,12 @@ describe('v2Encrypt - tests', function () {
   describe('1 validate create compact request', function () {
 
     it('1.1 should return a promise that contains the compacted request', function () {
-      return v2Encrypt.model.promiseCompactEncryptRequest(items, props)
+      return v2Decrypt.model.promiseCompactDecryptRequest(items, props)
         .then(function (result) {
-          console.log('*******', result);
+          //console.log('*******', result);
           result.should.have.property('@context');
           result.should.have.property('id');
-          result.should.have.property('type', 'EncryptRequest');
+          result.should.have.property('type', 'DecryptRequest');
           result.should.have.property('encryption_metadata');
           result.should.have.property('items');
 
@@ -79,31 +81,29 @@ describe('v2Encrypt - tests', function () {
             result.items[i].should.have.property('id');
             result.items[i].should.have.property('type');
             result.items[i].should.have.property('v');
+            result.items[i].should.have.property('n');
           }
         });
     }); //it 1.1
   }); // describe 1
 
-  describe('2 execute encryption', function () {
+  describe('2 execute v2Decrypt - nock out call to OS', function () {
 
-    it('2.1 should return a promise that contains the encrypted items', function () {
+    it('2.1 should create the request, invoke the OS, and return the results', function () {
       //
       // Nock out the call to the obfuscation service that is in the canon
       //
-      // nock out the GET for the home document
-
       nock('http://test.webshield.io')
             .log(console.log)
             .defaultReplyHeaders({ 'Content-Type': 'application/json', })
-            .post('/obfuscation_service/v2/encrypt')
+            .post('/obfuscation_service/v2/decrypt')
             .reply(HttpStatus.OK, function (uri, requestBody) {
-              //requestBody.should.be.equal(jwtM);
               this.req.headers.should.have.property('content-type', 'application/json');
-              uri.should.equal('/obfuscation_service/v2/encrypt');
+              uri.should.equal('/obfuscation_service/v2/decrypt');
               assert(requestBody, util.format('no request request body:%j', requestBody));
 
-              //console.log('****', requestBody);
-              requestBody.should.have.property('type', 'EncryptRequest');
+              console.log('****', requestBody);
+              requestBody.should.have.property('type', 'DecryptRequest');
 
               // check expaned key information
               requestBody.encryption_metadata.length.should.be.equal(1);
@@ -117,24 +117,21 @@ describe('v2Encrypt - tests', function () {
               cekmd.raw_encrypt_key_md.should.have.property('alg');
               cekmd.raw_encrypt_key_md.should.have.property('k');
 
-              return localTestCanons.encryptResponse(requestBody.items);
+              return localTestCanons.decryptResponse(requestBody.items);
             });
 
-      let promiseResult = v2Encrypt.execute(dummyServiceCtx, items, props);
+      let promiseResult = v2Decrypt.execute(dummyServiceCtx, items, props);
       return promiseResult.then(function (result) {
         result.should.have.property('@graph');
         let items = result['@graph'];
         items.length.should.equal(2);
         items[0].should.have.property('id', 'id1');
         items[0].should.have.property('result');
-        items[0].result.should.have.property('@type', props.pai['@id']);
-        items[0].result.should.have.property('@value');
+        items[0].should.have.property('result', 'clear-text-cipher-value');
         items[1].should.have.property('id', 'id2');
-        items[1].should.have.property('result');
-        items[1].result.should.have.property('@type', props.pai['@id']);
-        items[1].result.should.have.property('@value');
+        items[1].should.have.property('result', 'clear-text-cipher-value');
       });
     }); //it 2.1
-  }); // describe 2
+  }); // describe 2*/
 
 }); // describe

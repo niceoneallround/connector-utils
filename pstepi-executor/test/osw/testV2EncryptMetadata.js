@@ -55,4 +55,23 @@ describe('v2EncryptMetadata - tests', function () {
     }); //it 1.2
   }); // describe 1
 
+  describe('2 validate that unpacked content encrytion key looks correct', function () {
+
+    it('2.2 should add an unpacked content encryption key to a compacted encrypt metadata', function () {
+
+      let md = v2EncryptMetadata.create(props);
+      return JSONLDPromises.compact(md, encryptJSONLDContext)
+        .then(function (compactEMD) {
+          v2EncryptMetadata.addUnpackedContentEncryptKey(compactEMD);
+
+          // note the test key is of this format - not generic
+          let cekmd = compactEMD.content_encrypt_key_md;
+          cekmd.should.have.property('raw_encrypt_key_md');
+          cekmd.raw_encrypt_key_md.should.have.property('alg', 'AES_256');
+          cekmd.raw_encrypt_key_md.should.have.property('k');
+          cekmd.raw_encrypt_key_md.should.have.property('kty', 'oct');
+        });
+    }); //it 2.1
+  }); // describe 2
+
 }); // describe

@@ -2,7 +2,7 @@
 
 /*
 
-Returns a promise containing the encrypted items after calling a v2 protocol encrypt
+Returns a promise containing the decrypted items after calling a v2 protocol deecrypt
 service. In the following format
 
 { '@graph': [
@@ -20,11 +20,11 @@ The V2 Protocol request is of the following format
 // assume a @context
 //
 
-The ENCRYPT REQUEST sent to the External Obfuscation Service - created from past in values
+The DECRYPT REQUEST sent to the External Obfuscation Service - created from past in values
 {  // The compact jsonld context
   '@context': 'JSON LD context',
   'id': ‘ a request id’,
-  'type': EncryptRequest,
+  'type': DecryptRequest,
   'encryption_metadata'[ <encrypt metadata>]
   // Array of items to encrypt, each item has the following fields
   // id - id for the field, in future will be opaque. This is passed back in the response
@@ -45,22 +45,21 @@ The ENCRYPT REQUEST sent to the External Obfuscation Service - created from past
 // Assume an @context to make json-ld
 //
 
-ENCRYPT RESPONSE from the External Obfuscation Service
+DECRYPT RESPONSE from the External Obfuscation Service
 {
   'id': ‘ a response id’,
-  'type': 'EncryptResponse',
+  'type': 'DecryptResponse',
   'responding_to': the request that was responding to
   // Array of items, there is one item corresponding to each item passed in on ecnrypt request
   // id - the passed in id
   // type - the passed in type
-  // v - the encrypted value
-  // n - optional - if used the one passed in or created a new one this should be returned here
-  // aad - optional - if used the one passed in or created a new one this should be returned here
+  // v - the decrypted value
+  //
   //
   'items':
   [
-    { ‘id’ : ‘an id', ‘type’: ‘md @id’, ‘v’ : base64(bytes[]) , n: base64(bytes[], aad: base64(bytes[]},
-    { ‘id’ : ‘an id',   ‘type’: ‘md @id’, ‘v’ : base64(bytes[], n: base64(bytes[], aad: base64(bytes[]) }
+    { ‘id’ : ‘an id', ‘type’: ‘md @id’, ‘v’ : base64(bytes[]) },
+    { ‘id’ : ‘an id',   ‘type’: ‘md @id’, ‘v’ : base64(bytes[], ) }
   ]
 }
 
@@ -77,7 +76,6 @@ const encryptJSONLDContext = require('./model').model.encrypt.v2.jsonldContext;
 const PNDataModel = require('data-models/lib/PNDataModel');
 const PN_P = PNDataModel.PROPERTY;
 const PN_T = PNDataModel.TYPE;
-const PNOVUtils = require('data-models/lib/PNObfuscatedValue').utils;
 const requestWrapperPromises = require('node-utils/requestWrapper/lib/requestWrapper').promises;
 const util = require('util');
 const v2EncryptMetadata = require('./v2EncryptMetadata');
@@ -107,13 +105,13 @@ utils.execute = function execute(serviceCtx, items, props) {
   assert(props.os, util.format('execute - props.os param missing:%j', props));
   assert(props.cekmd, util.format('execute - props.cekmd param missing:%j', props));
 
-  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Encrypt-Start',
+  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Decrypt-Start',
                                       msgId: props.msgId, }, loggingMD);
 
-  let promiseEncryptResult = model.promiseCompactEncryptRequest(items, props)
+  let promiseDecryptResult = model.promiseCompactDecryptRequest(items, props)
     .then(function (compactRequest) {
 
-      serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Encrypt-Created-Encrypt-Request',
+      serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Decrypt-Created-Encrypt-Request',
                                           msgId: props.msgId,
                                           data: compactRequest, }, loggingMD);
 
@@ -128,7 +126,7 @@ utils.execute = function execute(serviceCtx, items, props) {
         compactRequest.encryption_metadata = [compactRequest.encryption_metadata];
       }
 
-      serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Encrypt-Created-Encrypt-Request-Post-Expand-Raw',
+      serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Decrypt-Created-Encrypt-Request-Post-Expand-Raw',
                                           msgId: props.msgId,
                                           data: compactRequest, }, loggingMD);
 
@@ -136,45 +134,46 @@ utils.execute = function execute(serviceCtx, items, props) {
       // Invoke the obfuscation service to encrypt the items
       //
       let postProps = {};
-      postProps.url = JSONLDUtilsNp.getV(props.os, PN_P.obfuscateEndpoint);
+      postProps.url = JSONLDUtilsNp.getV(props.os, PN_P.deobfuscateEndpoint);
       postProps.json = compactRequest;
 
-      serviceCtx.logger.logProgress(util.format('POST EncryptRequest to Obfuscation Service:%s', postProps.url));
+      serviceCtx.logger.logProgress(util.format('POST DecryptRequest to Obfuscation Service:%s', postProps.url));
 
       return requestWrapperPromises.postJSON(postProps);
     });
 
   // process the result from the obfuscation service
-  return promiseEncryptResult
+  return promiseDecryptResult
     .then(
       function (response) {
 
-        serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Encrypt-Response-From-Encryption-Service',
+        serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Decrypt-Response-From-Encryption-Service',
                                             msgId: props.msgId,
                                             data: response.body, }, loggingMD);
 
         // create the response items
         let body = JSON.parse(response.body);
         let items = body.items;
-        let encryptedItems = [];
+        let eItems = [];
         for (let i = 0; i < items.length; i++) {
-          // note assumes the values have all been base encoded already - so does nothing.
-          encryptedItems.push({
+          // the result is decrypted value that for now is assumed to be a string that is repesented as a base64(byte[])
+          // so need to convert back into a string. Note can look at the Schema to determine the actual type
+          eItems.push({
             id: items[i].id,
-            result: PNOVUtils.createOVFromOItem({ type: props.pai['@id'], v: items[i].v, n: items[i].n, aad: items[i].aad, }), // create Obfuscated Value
+            result: Buffer.from(items[i].v, 'base64').toString(),
           });
         }
 
-        serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Encrypt-End',
+        serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Decrypt-End',
                                             msgId: props.msgId,
-                                            data: encryptedItems, }, loggingMD);
+                                            data: eItems, }, loggingMD);
 
-        return { '@graph': encryptedItems, };
+        return { '@graph': eItems, };
       },
 
     function (err) {
       // error calling encrypt
-      serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'v2Encrypt-Error-Calling-Encryption-Service',
+      serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'v2Decrypt-Error-Calling-Encryption-Service',
                                           msgId: props.msgId,
                                           err: err, }, loggingMD);
       throw err;
@@ -188,13 +187,13 @@ utils.execute = function execute(serviceCtx, items, props) {
 let model = {};
 
 //
-// create encrypt items that are sent to the service
+// create eitems that are sent to the service
 //
 // The information is represented as follows
 //
-// value - a string in the jsonld graph, is converted into a base64(byte[])
-// nonce - a byte[] is converted into a base64(byte[])
-// aad - a string such as @id, is converted into a base64(byte[])
+// value - base64(byte[])
+// nonce - base64(byte[])
+// aad - base64(byte[])
 //
 //
 //   The jsonld compact format of external items is the following, this returns the expanded version
@@ -207,14 +206,22 @@ model.createItems = function createItems(items, encryptMetadata) {
   let result = [];
   for (let i = 0; i < items.length; i++) {
 
-    assert(_.isString(items[i].v), util.format('createEncryptItems can only handle string values:%j', items[i]));
-    assert(_.isNil(items[i].n), util.format('createEncryptItems cannot yet handle nonce:%j', items[i]));
-    assert(_.isNil(items[i].aad), util.format('createEncryptItems cannot yet handle aad:%j', items[i]));
+    assert(items[i].v, util.format('createItems does not have a value?:%j', items[i]));
 
     let ei = { '@id': items[i].id, '@type': encryptMetadata['@id'], };
 
-    // convert to base64, note kind of assumes input is a string need to look at other types
-    ei[PN_P.v] = Buffer.from(items[i].v).toString('base64');
+    // The encrypted value is already in base64 format so just add
+    ei[PN_P.v] = items[i].v;
+
+    // if a nonce add it, note it is already is in base64 format
+    if (!_.isNil(items[i].n)) {
+      ei[PN_P.n] = items[i].n;
+    }
+
+    // if an aad add it, note it is already is in base64 format
+    if (!_.isNil(items[i].aad)) {
+      ei[PN_P.aad] = items[i].aad;
+    }
 
     result.push(ei);
   }
@@ -222,10 +229,10 @@ model.createItems = function createItems(items, encryptMetadata) {
   return result;
 };
 
-model.promiseCompactEncryptRequest = function promiseCompactEncryptRequest(items, props) {
+model.promiseCompactDecryptRequest = function promiseCompactDecryptRequest(items, props) {
   'use strict';
 
-  let eRequest = JSONLDUtils.createBlankNode({ '@type': PN_T.EncryptRequest, });
+  let eRequest = JSONLDUtils.createBlankNode({ '@type': PN_T.DecryptRequest, });
 
   //
   // Create the external encryptMetadata that needs to be sent to the external service

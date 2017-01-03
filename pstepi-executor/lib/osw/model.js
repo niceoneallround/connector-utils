@@ -21,6 +21,8 @@ model.encrypt.v2.jsonldContext = {
   pnp: 'http://pn.schema.webshield.io/prop#',
   pnt: 'http://pn.schema.webshield.io/type#',
 
+  DecryptRequest: 'pnt:DecryptRequest',
+  DecryptResponse: 'pnt:DecryptResponse',
   EncryptMetadata: 'pnt:EncryptMetadata',
   EncryptKeyMetadata: 'pnt:EncryptKeyMetadata',
   EncryptRequest: 'pnt:EncryptRequest',
