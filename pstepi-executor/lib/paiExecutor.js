@@ -5,11 +5,13 @@ const JSONLDUtils = require('jsonld-utils/lib/jldUtils').npUtils;
 const eitemUtils = require('./eitemUtils');
 const PNDataModel = require('data-models/lib/PNDataModel');
 const PN_P = PNDataModel.PROPERTY;
+const PN_T = PNDataModel.TYPE;
 const v2Encrypt = require('./osw/v2Encrypt');
-
+const v2Decrypt = require('./osw/v2Decrypt');
 const loggingMD = {
         ServiceType: 'connector-utils/pstepi-executor',
         FileName: 'paiExecutor.js', };
+const util = require('util');
 
 let promises = {};
 let callbacks = {};
@@ -54,6 +56,8 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
   serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PAI-Executor-Execute-Using-Privacy-Action-Instance',
                                       msgId: props.msgId,
                                       pai: props.pai['@id'],
+                                      paiAction: props.pai[PN_P.action],
+                                      pai2Deobfuscate: props.pai[PN_P.privacyActionInstance2Deobfuscate],
                                       metadata: props.pai, }, loggingMD);
 
   let data;
@@ -66,6 +70,8 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
   serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PAI-Executor-Execute-Using-Data',
                                       msgId: props.msgId,
                                       pai: props.pai['@id'],
+                                      paiAction: props.pai[PN_P.action],
+                                      pai2Deobfuscate: props.pai[PN_P.privacyActionInstance2Deobfuscate],
                                       data: data, }, loggingMD);
 
   // get the schema to procss, note the schema is stored as a string otherwise
@@ -80,6 +86,8 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
       serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'PAI-Executor-Execute-ERROR-Parsing-Schema-From-String',
                                           msgId: props.msgId,
                                           pai: props.pai['@id'],
+                                          paiAction: props.pai[PN_P.action],
+                                          pai2Deobfuscate: props.pai[PN_P.privacyActionInstance2Deobfuscate],
                                           schema: schemaS,
                                           errror: err, }, loggingMD);
       throw err;
@@ -91,37 +99,54 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
   //
   // Create the set of eitems that need to be passed to the obfuscation service
   //
-  let promiseItems2Obfuscate = eitemUtils.promises.mapData2EncryptItems(serviceCtx, data, schema, props.pai, props);
+  let promiseItems = eitemUtils.promises.mapData2EncryptItems(serviceCtx, data, schema, props.pai, props);
 
-  // obfuscate the items
-  let promiseObfuscatedItems = promiseItems2Obfuscate
+  // call the obfuscation service to either encrypt or decrypt the items
+  let promiseResultFromOS = promiseItems
     .then(function (makeItemsResult) {
 
       rCtx.makeItemsResult = makeItemsResult;
 
-      //
-      // call the obfuscation service -
-      // for now hardcoded to call v2 and pass none of required params only so ca get up and runnung
-      //
-      return v2Encrypt.execute(serviceCtx, rCtx.makeItemsResult.eitems, props);
+      switch (props.pai[PN_P.action]) {
+
+        case PN_T.Obfuscate: {
+          //
+          // call the obfuscation service -
+          // for now hardcoded to call v2 and pass none of required params only so ca get up and runnung
+          //
+          return v2Encrypt.execute(serviceCtx, rCtx.makeItemsResult.eitems, props);
+        }
+
+        case PN_T.Deobfuscate: {
+          //
+          // call the obfuscation service -
+          // for now hardcoded to call v2 and pass none of required params only so ca get up and runnung
+          //
+          return v2Decrypt.execute(serviceCtx, rCtx.makeItemsResult.eitems, props);
+        }
+
+        default: {
+          assert(false, util.format('unknown pai action type:%j', props.pai));
+        }
+      }
     });
 
-  let promisePrivacyGraphs = promiseObfuscatedItems
+  let promiseGraphs = promiseResultFromOS
     .then(function (encryptedOitems) {
       //
-      // create the privacy graphs based on the results from the obfuscation service
-      // note these only contain nodes that should be obfuscated
+      // reconstruct the JSONLD graphs based on the results from the obfuscation service
+      // these may or maynot be privacy graphs
       //
       return eitemUtils.promises.createNodesBasedOnEitemMap(
                 serviceCtx, encryptedOitems['@graph'],
                 rCtx.makeItemsResult.eitemsMap, data, props.pai, props);
     });
 
-  // return the privacy graphs
-  promisePrivacyGraphs
-    .then(function (privacyGraphs) {
+  // return the graphs
+  promiseGraphs
+    .then(function (graphs) {
 
-      return callback(null, { '@graph': privacyGraphs.privacyGraphs });
+      return callback(null, { '@graph': graphs.privacyGraphs }); // note this may or may not be a pg
 
     })
     .catch(function (err) {
@@ -129,6 +154,8 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
       serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'PAI-Executor-Execute-ERROR',
                                           msgId: props.msgId,
                                           pai: props.pai['@id'],
+                                          paiAction: props.pai[PN_P.action],
+                                          pai2Deobfuscate: props.pai[PN_P.privacyActionInstance2Deobfuscate],
                                           error: err, }, loggingMD);
 
       throw err;
