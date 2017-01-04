@@ -89,7 +89,6 @@ let utils = {};
 // serviceCtx
 // items an array of OItems
 // props.os - the obfuscation service pn resource
-// props.kms - the kms service pn resource
 // props.cekmd - content encrypt key metadata
 // props.pai - privacy action instance
 //
@@ -103,7 +102,6 @@ utils.execute = function execute(serviceCtx, items, props) {
   assert(props, 'execute - props param missing');
   assert(props.msgId, util.format('execute - props.msgId param missing:%j', props));
   assert(props.pai, util.format('execute - props.pai param missing:%j', props));
-  assert(props.kms, util.format('execute - props.kms param missing:%j', props));
   assert(props.os, util.format('execute - props.os param missing:%j', props));
   assert(props.cekmd, util.format('execute - props.cekmd param missing:%j', props));
 

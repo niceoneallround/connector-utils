@@ -4,7 +4,6 @@ const nock = require('nock');
 const HttpStatus = require('http-status');
 const v2Encrypt = require('../../lib/osw/v2Encrypt');
 const EKMDCanons = require('metadata/lib/encryptKeyMetadata').canons;
-const KMSCanons = require('metadata/lib/kms').canons;
 const OSCanons = require('metadata/lib/obfuscationService').canons;
 const PNOVUtils = require('data-models/lib/PNObfuscatedValue').utils;
 const PSICanons = require('metadata/lib/PrivacyStepInstance').canons;
@@ -23,7 +22,6 @@ describe('v2Encrypt - tests', function () {
 
   let props = {};
   props.msgId = 'msgId1';
-  props.kms = KMSCanons.createTestKMS({ hostname: 'hostname', domainName: 'domainName', });
   props.os = OSCanons.createTestObfuscationService({ hostname: 'hostname', domainName: 'domainName', });
   props.pai = pstepI[PN_P.privacyActionInstance][0]; // set to canon privacy action instance
   props.cekmd = EKMDCanons.createTestKey({ hostname: 'hostname', domainName: 'domainName', });
