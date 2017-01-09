@@ -109,7 +109,7 @@ utils.execute = function execute(serviceCtx, items, props) {
   let promiseDecryptResult = model.promiseCompactDecryptRequest(items, props)
     .then(function (compactRequest) {
 
-      serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Decrypt-Created-Encrypt-Request',
+      serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Decrypt-Created-Decrypt-Request',
                                           msgId: props.msgId,
                                           data: compactRequest, }, loggingMD);
 

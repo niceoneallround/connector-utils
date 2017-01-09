@@ -47,6 +47,7 @@ class PSIExecutor {
     }
   }
 
+  // returns a promise that executes the privacy step
   execute(serviceCtx, props) {
     assert(serviceCtx, 'serviceCtx param missing');
     assert(props, 'pstepi-execute: props param missing');
