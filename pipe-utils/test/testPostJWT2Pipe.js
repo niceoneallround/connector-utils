@@ -42,7 +42,7 @@ describe('Post JWT 2 Privacy Pipe Tests', function () {
             return 'do-not-care';
           });
 
-    pipeUtils.promises.postJWT2Pipe(dummyServiceCtx, fakePipe, 'sendJWT', { msgId: 'id-1', msgAction: 'testing', })
+    pipeUtils.promises.postJWT(dummyServiceCtx, fakePipe, 'sendJWT', { msgId: 'id-1', msgAction: 'testing', })
       .then(
         function (result) {
           assert(result, 'no result passed');

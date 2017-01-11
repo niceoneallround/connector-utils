@@ -216,7 +216,7 @@ callbacks.createPrivacyPipe = function createPrivacyPipe(serviceCtx, requestId, 
   props.msgId
   props.msgAction
 */
-promises.postJWT2Pipe = function postJWT2Pipe(serviceCtx, pipe, sendJWT, props) {
+promises.postJWT = function promisePostJWT(serviceCtx, pipe, sendJWT, props) {
   'use strict';
   assert(serviceCtx, 'serviceCtx param is missing');
   assert(pipe, 'pipe param is missing');
@@ -226,7 +226,7 @@ promises.postJWT2Pipe = function postJWT2Pipe(serviceCtx, pipe, sendJWT, props) 
   assert(props.msgAction, util.format('props.msgAction param is missing'));
 
   return new Promise(function (resolve, reject) {
-    callbacks.postJWT2Pipe(serviceCtx, pipe, sendJWT, props, function (err, response) {
+    callbacks.postJWT(serviceCtx, pipe, sendJWT, props, function (err, response) {
       if (err) {
         reject(err);
       } else {
@@ -236,7 +236,7 @@ promises.postJWT2Pipe = function postJWT2Pipe(serviceCtx, pipe, sendJWT, props) 
   });
 };
 
-callbacks.postJWT2Pipe = function postJWT2Pipe(serviceCtx, pipe, sendJWT, props, callback) {
+callbacks.postJWT = function callbackPostJWT(serviceCtx, pipe, sendJWT, props, callback) {
   'use strict';
 
   let postURL = JSONLDUtils.getV(pipe, PN_P.postDataUrl);
