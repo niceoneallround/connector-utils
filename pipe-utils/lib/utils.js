@@ -2,6 +2,7 @@
 
 const apigwRequestWrapper = require('node-utils/apigwRequestWrapper/lib/apigwRequestWrapper');
 const assert = require('assert');
+const JSONLDUtils = require('jsonld-utils/lib/jldUtils').npUtils;
 const JWTClaims = require('jwt-utils/lib/jwtUtils').claims;
 const JWTUtils = require('jwt-utils/lib/jwtUtils').jwtUtils;
 const HttpStatus = require('http-status');
@@ -9,6 +10,7 @@ const MDUtils = require('metadata/lib/md').utils;
 const moment = require('moment');
 const PNDataModel = require('data-models/lib/PNDataModel');
 const PN_T = PNDataModel.TYPE;
+const PN_P = PNDataModel.PROPERTY;
 const util = require('util');
 
 const loggingMD = {
@@ -207,6 +209,122 @@ callbacks.createPrivacyPipe = function createPrivacyPipe(serviceCtx, requestId, 
       } // default
     } // switch
   }); // post
+};
+
+/*
+  Post the past in JWT to the passsed in pipe and return the response
+  props.msgId
+  props.msgAction
+*/
+promises.postJWT2Pipe = function post2Pipe(serviceCtx, pipe, sendJWT, props) {
+  'use strict';
+  assert(props, 'props param is missing');
+  assert(props.msgId, util.format('props.msgId param is missing'));
+
+  return new Promise(function (resolve, reject) {
+    callbacks.postJWT2Pipe(serviceCtx, pipe, sendJWT, props, function (err, response) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(response);
+      }
+    });
+  });
+};
+
+callbacks.postJWT2Pipe = function postJWT2Pipe(serviceCtx, pipe, sendJWT, props, callback) {
+  'use strict';
+
+  let postURL = JSONLDUtils.getV(pipe, PN_P.postDataUrl);
+
+  apigwRequestWrapper.promises.postJWT(serviceCtx, props.msgId, postURL, sendJWT)
+    .then(function (response) {
+      switch (response.statusCode) {
+
+        case HttpStatus.OK: {
+          serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
+                                      action: props.msgAction + '-POST-JWT-2-Pipe-OK',
+                                      msgId: props.msgId,
+                                      privacyPipe: pipe['@id'],
+                                      headers: response.headers,
+                                      postURL: postURL, }, loggingMD);
+
+          return callback(null, response);
+        }
+
+        case HttpStatus.BAD_REQUEST: {
+          let error = response.body;
+          serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
+                                      action: props.msgAction + '-POST-JWT-2-Pipe-BAD-REQUEST',
+                                      msgId: props.msgId,
+                                      privacyPipe: pipe['@id'],
+                                      headers: response.headers,
+                                      error: error,
+                                      postURL: postURL, }, loggingMD);
+
+          return callback(error, null);
+        }
+
+        case HttpStatus.FORBIDDEN: {
+          let error = PNDataModel.errors.createNotFoundError({
+              id: PNDataModel.ids.createErrorId(serviceCtx.config.getHostname(), moment().unix()),
+              errMsg: util.format('ERROR FORBIDDEN for msg:%s returned when posting data to pipe [%s] see log file',
+                                  props.msgId, pipe['@id']),
+            });
+
+          serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
+                                      action: props.msgAction + '-POST-JWT-2-Pipe-FORBIDDEN',
+                                      msgId: props.msgId,
+                                      privacyPipe: pipe['@id'],
+                                      headers: response.headers,
+                                      error: error,
+                                      postURL: postURL, }, loggingMD);
+          return callback(error, null);
+        }
+
+        case HttpStatus.NOT_FOUND: {
+          let error = PNDataModel.errors.createNotFoundError({
+              id: PNDataModel.ids.createErrorId(serviceCtx.config.getHostname(), moment().unix()),
+              errMsg: util.format('ERROR NOT-FOUND for msg:%s returned when posting data to pipe [%s] see log file',
+                          props.msgId, pipe['@id']),
+            });
+
+          serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
+                                      action: props.msgAction + '-POST-JWT-2-Pipe-NOT-FOUND',
+                                      msgId: props.msgId,
+                                      privacyPipe: pipe['@id'],
+                                      headers: response.headers,
+                                      error: error,
+                                      postURL: postURL, }, loggingMD);
+
+          return callback(error, null);
+        }
+
+        default:
+          assert(false,
+            util.format('failed to post to:%s with unlknown response.statusCode:%s', postURL, response.statusCode));
+      }
+
+    },
+
+    function (err) {
+      serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
+                                  action: props.msgAction + '-POST-JWT-2-Pipe-ERROR',
+                                  msgId: props.msgId,
+                                  privacyPipe: pipe['@id'],
+                                  error: err,
+                                  postURL: postURL, }, loggingMD);
+      return callback(err, null);
+    })
+    .catch(function (reason) {
+      serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
+                                  action: props.msgAction + '-POST-JWT-2-Pipe-CATCH-ERROR',
+                                  msgId: props.msgId,
+                                  privacyPipe: pipe['@id'],
+                                  error: reason,
+                                  postURL: postURL, }, loggingMD);
+      return callback(reason, null);
+    });
 };
 
 module.exports = {
