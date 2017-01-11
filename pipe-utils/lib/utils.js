@@ -216,10 +216,14 @@ callbacks.createPrivacyPipe = function createPrivacyPipe(serviceCtx, requestId, 
   props.msgId
   props.msgAction
 */
-promises.postJWT2Pipe = function post2Pipe(serviceCtx, pipe, sendJWT, props) {
+promises.postJWT2Pipe = function postJWT2Pipe(serviceCtx, pipe, sendJWT, props) {
   'use strict';
+  assert(serviceCtx, 'serviceCtx param is missing');
+  assert(pipe, 'pipe param is missing');
+  assert(sendJWT, 'sendJWT param is missing');
   assert(props, 'props param is missing');
   assert(props.msgId, util.format('props.msgId param is missing'));
+  assert(props.msgAction, util.format('props.msgAction param is missing'));
 
   return new Promise(function (resolve, reject) {
     callbacks.postJWT2Pipe(serviceCtx, pipe, sendJWT, props, function (err, response) {
