@@ -74,7 +74,7 @@ class PSIExecutor {
           serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PSI-Executor-Privacy-Step-Instance-COMPLETE-OK',
                                                 msgId: props.msgId,
                                                 psi: props.psi['@id'],
-                                                result: result['@graph'].length, }, loggingMD);
+                                                privacyGraphCount: result['@graph'].length, }, loggingMD);
 
           return result;
         },
