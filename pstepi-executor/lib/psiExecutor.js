@@ -58,7 +58,7 @@ class PSIExecutor {
     assert((props.psi[PN_P.privacyActionInstance].length === 1),
             util.format('pstepi-execute: Can only provision a single privacy action:%j', props.psi));
 
-    serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PSI-Executor-Using-Privacy-Step-Instance',
+    serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PSI-Executor-Using-Privacy-Step-Instance-Start',
                                           msgId: props.msgId,
                                           psi: props.psi['@id'],
                                           metadata: props.psi, }, loggingMD);
@@ -71,6 +71,11 @@ class PSIExecutor {
       .then(
         function (result) {
           // just return the result
+          serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PSI-Executor-Using-Privacy-Step-Instance-COMPLETE-OK',
+                                                msgId: props.msgId,
+                                                psi: props.psi['@id'],
+                                                metadata: props.psi, }, loggingMD);
+
           return result;
         },
 

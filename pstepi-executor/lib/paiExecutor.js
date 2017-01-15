@@ -53,7 +53,7 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
   // items that can be sent to the obfuscation service
   //
 
-  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PAI-Executor-Execute-Using-Privacy-Action-Instance',
+  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PAI-Executor-Execute-Using-Privacy-Action-Instance-START',
                                       msgId: props.msgId,
                                       pai: props.pai['@id'],
                                       paiAction: props.pai[PN_P.action],
@@ -145,6 +145,13 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
   // return the graphs
   promiseGraphs
     .then(function (graphs) {
+
+      serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PAI-Executor-Execute-Using-Privacy-Action-Instance-COMPLETE-OK',
+                                          msgId: props.msgId,
+                                          pai: props.pai['@id'],
+                                          paiAction: props.pai[PN_P.action],
+                                          pai2Deobfuscate: props.pai[PN_P.privacyActionInstance2Deobfuscate],
+                                          privacyGraphCount: graphs.privacyGraphs.length, }, loggingMD);
 
       return callback(null, { '@graph': graphs.privacyGraphs }); // note this may or may not be a pg
 
