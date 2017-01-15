@@ -245,7 +245,8 @@ callbacks.postJWT = function callbackPostJWT(serviceCtx, pipe, sendJWT, props, c
     .then(function (response) {
       switch (response.statusCode) {
 
-        case HttpStatus.OK: {
+        case HttpStatus.OK:
+        case HttpStatus.ACCEPTED: {
           serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
                                       action: props.msgAction + '-POST-JWT-2-Pipe-OK',
                                       msgId: props.msgId,
@@ -306,7 +307,7 @@ callbacks.postJWT = function callbackPostJWT(serviceCtx, pipe, sendJWT, props, c
 
         default:
           assert(false,
-            util.format('failed to post to:%s with unlknown response.statusCode:%s', postURL, response.statusCode));
+            util.format('failed to post to:%s with unknown response.statusCode:%s', postURL, response.statusCode));
       }
 
     },
