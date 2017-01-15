@@ -58,7 +58,7 @@ class PSIExecutor {
     assert((props.psi[PN_P.privacyActionInstance].length === 1),
             util.format('pstepi-execute: Can only provision a single privacy action:%j', props.psi));
 
-    serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PSI-Executor-Using-Privacy-Step-Instance-Start',
+    serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PSI-Executor-Privacy-Step-Instance-Start',
                                           msgId: props.msgId,
                                           psi: props.psi['@id'],
                                           metadata: props.psi, }, loggingMD);
@@ -71,23 +71,23 @@ class PSIExecutor {
       .then(
         function (result) {
           // just return the result
-          serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PSI-Executor-Using-Privacy-Step-Instance-COMPLETE-OK',
+          serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PSI-Executor-Privacy-Step-Instance-COMPLETE-OK',
                                                 msgId: props.msgId,
                                                 psi: props.psi['@id'],
-                                                metadata: props.psi, }, loggingMD);
+                                                result: result['@graph'].length, }, loggingMD);
 
           return result;
         },
 
         function (err) {
-          serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'PSI-Executor-Using-Privacy-Step-Instance-ERROR',
+          serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'PSI-Executor-Privacy-Step-Instance-ERROR',
                                                 msgId: props.msgId,
                                                 psi: props.psi['@id'],
                                                 error: err, }, loggingMD);
           throw err;
         })
       .catch(function (err) {
-        serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'PSI-Executor-Using-Privacy-Step-Instance-Catch-ERROR',
+        serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'PSI-Executor-Privacy-Step-Instance-Catch-ERROR',
                                               msgId: props.msgId,
                                               psi: props.psi['@id'],
                                               error: err, }, loggingMD);

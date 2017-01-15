@@ -36,7 +36,7 @@ describe('PSI Test Privacy Step Instance Executor', function () {
           assert(props, 'props param is missing');
           assert(props.pai, util.format('props.pai param is missing:%j', props));
           return new Promise(function (resolve) {
-            resolve('pass-thru');
+            resolve({ '@graph': ['a', 'b'], }); // fake graph of privacy graphs
           });
         },
       };
@@ -45,7 +45,7 @@ describe('PSI Test Privacy Step Instance Executor', function () {
 
       return psiE.execute(serviceCtx, { msgId: 'msgId', psi: psi, graph: 'fake-data', })
         .then(function (result) {
-          result.should.be.equal('pass-thru');
+          result['@graph'].length.should.be.equal(2);
         });
 
     }); //it 1.1

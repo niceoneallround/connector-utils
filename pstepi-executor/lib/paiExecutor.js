@@ -53,7 +53,7 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
   // items that can be sent to the obfuscation service
   //
 
-  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PAI-Executor-Execute-Using-Privacy-Action-Instance-START',
+  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PAI-Executor-Privacy-Action-Instance-START',
                                       msgId: props.msgId,
                                       pai: props.pai['@id'],
                                       paiAction: props.pai[PN_P.action],
@@ -67,7 +67,7 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
     data = [data];
   }
 
-  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PAI-Executor-Execute-Using-Data',
+  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PAI-Executor-Using-Data',
                                       msgId: props.msgId,
                                       pai: props.pai['@id'],
                                       paiAction: props.pai[PN_P.action],
@@ -83,7 +83,7 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
     try {
       schema = JSON.parse(schemaS);
     } catch (err) {
-      serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'PAI-Executor-Execute-ERROR-Parsing-Schema-From-String',
+      serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'PAI-Executor-ERROR-Parsing-Schema-From-String',
                                           msgId: props.msgId,
                                           pai: props.pai['@id'],
                                           paiAction: props.pai[PN_P.action],
@@ -146,7 +146,7 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
   promiseGraphs
     .then(function (graphs) {
 
-      serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PAI-Executor-Execute-Using-Privacy-Action-Instance-COMPLETE-OK',
+      serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'PAI-Executor-Privacy-Action-Instance-COMPLETE-OK',
                                           msgId: props.msgId,
                                           pai: props.pai['@id'],
                                           paiAction: props.pai[PN_P.action],
@@ -158,7 +158,7 @@ callbacks.execute = function execute(serviceCtx, props, callback) {
     })
     .catch(function (err) {
 
-      serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'PAI-Executor-Execute-ERROR',
+      serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name, action: 'PAI-Executor-ERROR',
                                           msgId: props.msgId,
                                           pai: props.pai['@id'],
                                           paiAction: props.pai[PN_P.action],
