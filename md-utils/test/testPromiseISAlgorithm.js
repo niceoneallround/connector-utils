@@ -34,7 +34,7 @@ describe('Promise Identity Syndication Algorithm Tests', function () {
     // Nock out call to get the ISA algorithm
     //
     let ISAlgorithm = createISAlgorithm();
-    let pathUrl = '/v1/metadata/resource___io___webshield___test--23';
+    let pathUrl = '/v1/metadata/identity_syndication_algorithm___io___webshield___test--23';
     nock(API_GATEWAY_URL)
           .log(console.log)
           .get(pathUrl)
