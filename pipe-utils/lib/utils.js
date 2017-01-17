@@ -15,7 +15,7 @@ const util = require('util');
 
 const loggingMD = {
     ServiceType: 'pipe-utils',
-    FileName: 'pipe-utils/utils.js', };
+    FileName: 'connector-utils/pipe-utils/utils.js', };
 
 let promises = {};
 let callbacks = {};
@@ -59,10 +59,11 @@ callbacks.createPrivacyPipe = function createPrivacyPipe(serviceCtx, requestId, 
   assert(pipe, 'createPrivacyPipe - no pipe param');
   assert(props, 'createPrivacyPipe - no props param');
 
-  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'Create-PRIVACY-PIPE',
+  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'Create-PRIVACY-PIPE-using-API-GATEWAY',
                           requestId: requestId,
                           pipeId: pipe['@id'],
-                          metadata: pipe, }, loggingMD);
+                          metadata: pipe,
+                          API_GATEWAY_URL: serviceCtx.config.API_GATEWAY_URL, }, loggingMD);
 
   //
   // The privacy broker expects the request as a signed JWT with a metadata claim
