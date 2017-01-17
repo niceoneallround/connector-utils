@@ -9,7 +9,7 @@ const should = require('should');
 const testUtils = require('node-utils/testing-utils/lib/utils');
 const util = require('util');
 
-describe('Post JWT 2 Privacy Pipe Tests', function () {
+describe('Post JWT 2 IS Privacy Pipe Tests', function () {
   'use strict';
 
   const API_GATEWAY_URL = 'http://fake.api.gateway';
@@ -28,7 +28,7 @@ describe('Post JWT 2 Privacy Pipe Tests', function () {
     });
   });
 
-  it('1.1 should post to the path', function (done) {
+  it('1.1 should post to the IS path', function (done) {
 
     const pipePathUrl = '/v1/any_url';
     const postURL = API_GATEWAY_URL + pipePathUrl;
@@ -42,7 +42,7 @@ describe('Post JWT 2 Privacy Pipe Tests', function () {
             return 'do-not-care';
           });
 
-    pipeUtils.promises.postJWT(dummyServiceCtx, fakePipe, 'sendJWT', { msgId: 'id-1', msgAction: 'testing', })
+    pipeUtils.promises.postJWT2IS(dummyServiceCtx, fakePipe, 'sendJWT', { msgId: 'id-1', msgAction: 'testing', })
       .then(
         function (result) {
           assert(result, 'no result passed');
