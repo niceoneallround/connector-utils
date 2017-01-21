@@ -11,6 +11,7 @@ const moment = require('moment');
 const PNDataModel = require('data-models/lib/PNDataModel');
 const PN_T = PNDataModel.TYPE;
 const PN_P = PNDataModel.PROPERTY;
+const requestWrapper = require('node-utils/requestWrapper/lib/requestWrapper');
 const util = require('util');
 
 const loggingMD = {
@@ -213,6 +214,11 @@ callbacks.createPrivacyPipe = function createPrivacyPipe(serviceCtx, requestId, 
 };
 
 /*
+
+  POST a JWT to a privacy pipe that is moving data to the IS that is fronted by either
+  the AWS API Gateway or a local gateway. Hence uses APIGW wrapper, that handles all
+  the authorization.
+
   Post the past in JWT to the passsed in pipe and return the response
   props.msgId
   props.msgAction
@@ -242,7 +248,7 @@ callbacks.postJWT2IS = function callbackPostJWT2IS(serviceCtx, pipe, sendJWT, pr
 
   let postURL = JSONLDUtils.getV(pipe, PN_P.postDataUrl);
 
-  apigwRequestWrapper.promises.postJWT(serviceCtx, props.msgId, postURL, sendJWT)
+  return apigwRequestWrapper.promises.postJWT(serviceCtx, props.msgId, postURL, sendJWT)
     .then(function (response) {
       switch (response.statusCode) {
 
@@ -330,6 +336,152 @@ callbacks.postJWT2IS = function callbackPostJWT2IS(serviceCtx, pipe, sendJWT, pr
                                   error: reason,
                                   postURL: postURL, }, loggingMD);
       return callback(reason, null);
+    });
+};
+
+/*
+
+  POST a JWT to an external client from the IS. For now the caller is expected
+  to setup the necessary authenticaiton mechanisn in the past in headers which are
+  passed onto the request wrapper. Example headers are api keys, or basicAuth.
+
+  Post the past in JWT to the passsed in pipe and return the response
+  props.headers (optional)
+  props.msgId
+  props.msgAction
+*/
+promises.postJWT2External = function promisePostJWT2External(serviceCtx, pipe, sendJWT, props) {
+  'use strict';
+  assert(serviceCtx, 'serviceCtx param is missing');
+  assert(pipe, 'pipe param is missing');
+  assert(sendJWT, 'sendJWT param is missing');
+  assert(props, 'props param is missing');
+  assert(props.msgId, util.format('props.msgId param is missing'));
+  assert(props.msgAction, util.format('props.msgAction param is missing'));
+
+  let postURL = JSONLDUtils.getV(pipe, PN_P.postDataUrl);
+
+  let postProps = {
+    url: postURL,
+    jwt: sendJWT,
+  };
+
+  if (props.headers) {
+    postProps.header = props.headers;
+  }
+
+  //
+  // Note sure why request wrapper is not returning an error but swizziling so
+  // anything other than ok or accept returns a rejected
+  //
+  return new Promise(
+    function (resolve, reject) {
+      return requestWrapper.promises.postJWT(postProps)
+        .then(function (response) {
+
+          switch (response.statusCode) {
+
+            case HttpStatus.OK:
+            case HttpStatus.ACCEPTED: {
+              serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
+                                          action: props.msgAction + '-POST-JWT-2-External-Source-OK',
+                                          msgId: props.msgId,
+                                          pipeId: pipe['@id'],
+                                          headers: response.headers,
+                                          postURL: postURL, }, loggingMD);
+
+              return resolve(response);
+            }
+
+            case HttpStatus.BAD_REQUEST: {
+              // bad request is returned as an application/json
+              if (response.headers['content-type'] === 'application/json') {
+                let err = JSON.parse(response.body);
+                serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
+                                          action: props.msgAction + '-POST-JWT-2-External-Source-ERROR-BAD-REQUEST',
+                                          msgId: props.msgId,
+                                          pipeId: pipe['@id'],
+                                          error: err, }, loggingMD);
+
+                return reject(response);
+
+              } else {
+                serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
+                                          action: props.msgAction + '-POST-JWT-2-External-Source-ERROR-BAD-REQUEST',
+                                          msgId: props.msgId,
+                                          pipeId: pipe['@id'],
+                                          headers: response.headers,
+                                          body: response.body, }, loggingMD);
+
+                return reject(response);
+              }
+
+              break;
+            }
+
+            case HttpStatus.FORBIDDEN: {
+              let error = PNDataModel.errors.createNotFoundError({
+                  id: PNDataModel.ids.createErrorId(serviceCtx.config.getHostname(), moment().unix()),
+                  errMsg: util.format('ERROR FORBIDDEN for msg:%s returned when posting data to pipe [%s] see log file',
+                                      props.msgId, pipe['@id']),
+                });
+
+              serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
+                                          action: props.msgAction + '-POST-JWT-2-External-Source-FORBIDDEN',
+                                          msgId: props.msgId,
+                                          privacyPipe: pipe['@id'],
+                                          headers: response.headers,
+                                          error: error,
+                                          postURL: postURL, }, loggingMD);
+              return reject(error);
+            }
+
+            case HttpStatus.NOT_FOUND: {
+              let error = PNDataModel.errors.createNotFoundError({
+                  id: PNDataModel.ids.createErrorId(serviceCtx.config.getHostname(), moment().unix()),
+                  errMsg: util.format('ERROR NOT-FOUND for msg:%s returned when posting data to pipe [%s] see log file',
+                              props.msgId, pipe['@id']),
+                });
+
+              serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
+                                          action: props.msgAction + '-POST-JWT-2-External-Source-NOT-FOUND',
+                                          msgId: props.msgId,
+                                          privacyPipe: pipe['@id'],
+                                          headers: response.headers,
+                                          error: error,
+                                          postURL: postURL, }, loggingMD);
+
+              return reject(error);
+            }
+
+            default:
+              assert(false,
+                util.format('failed to post to:%s with unknown response.statusCode:%s', postURL, response.statusCode));
+          }
+
+        },
+
+        function (err) {
+
+          serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
+                                      action: props.msgAction + '-POST-JWT-2-External-Source-ERROR',
+                                      msgId: props.msgId,
+                                      privacyPipe: pipe['@id'],
+                                      postURL: postURL,
+                                      error: err, }, loggingMD);
+
+          return reject(err);
+        }).
+        catch(function (reason) {
+          serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
+                                      action: props.msgAction + '-POST-JWT-2-External-Source-ERROR-CAUGHT-UNEPECTED',
+                                      msgId: props.msgId,
+                                      privacyPipe: pipe['@id'],
+                                      postURL: postURL,
+                                      error: reason, }, loggingMD);
+
+          reject(reason);
+        });
     });
 };
 
