@@ -136,7 +136,7 @@ callbacks.createPrivacyPipe = function createPrivacyPipe(serviceCtx, requestId, 
                             action: 'Create-PRIVACY-PIPE-PB-response-ERROR-CANNOT-CONVERT-JWT-to-PIPE',
                             requestId: requestId, pipeId: pipe['@id'],
                             error: newPipe, }, loggingMD);
-          return callback(null, newPipe);
+          return callback(newPipe, null);
         }
 
         let result = { pipe: newPipe }; // pipe is in metadata claim
@@ -165,49 +165,61 @@ callbacks.createPrivacyPipe = function createPrivacyPipe(serviceCtx, requestId, 
       } // OK
 
       case HttpStatus.BAD_REQUEST: {
-        // bad request is returned as an application/json
-        if (response.headers['content-type'] === 'application/json') {
-          let err = JSON.parse(response.body);
-          serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
-                                    action: 'Create-PRIVACY-PIPE-FAILED-BAD-REQUEST',
-                                    requestId: requestId,
-                                    pipeId: pipe['@id'],
-                                    pipe: pipe,
-                                    error: err, }, loggingMD);
 
-          return callback(null, err);
+        switch (response.headers['content-type']) {
 
-        } else {
-          serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
-                                    action: 'CREATE-PRIVACY-PIPE-FAILED-RETURNED-BAD-REQUEST-BUT-CONTENT-HEADER-NOT-APPLICATION/JSON',
-                                    requestId: requestId,
-                                    pipeId: pipe['@id'],
-                                    metadata: pipe,
-                                    headers: response.headers, }, loggingMD);
+          case 'application/json': {
+            // old format slowly changing to JWT
+            let err = JSON.parse(response.body);
+            serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
+                                      action: 'Create-PRIVACY-PIPE-FAILED-BAD-REQUEST-OLD-JSON-FORMAT',
+                                      requestId: requestId,
+                                      pipeId: pipe['@id'],
+                                      pipe: pipe,
+                                      error: err, }, loggingMD);
 
-          assert(false, util.format(
-            'CREATE-PRIVACY-PIPE-RETURNED-BAD-REQUEST-BUT-CONTENT-HEADER-NOT-APPLICATION/JSON:%j',
-            response.headers));
+            return callback(err, null);
+          }
 
-          return callback(null, null); // will not get here
+          case 'text/plain':  {
+            // jwt
+            let err = JWTUtils.decode(response.body);
+            serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
+                                      action: 'Create-PRIVACY-PIPE-FAILED-BAD-REQUEST-OLD-JSON-FORMAT',
+                                      requestId: requestId,
+                                      pipeId: pipe['@id'],
+                                      pipe: pipe,
+                                      error: err, }, loggingMD);
+
+            return callback(err, null);
+          }
+
+          default: {
+            serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
+                                      action: 'CREATE-PRIVACY-PIPE-FAILED-RETURNED-BAD-REQUEST-BUT-DO-NOT-RECOGNIZE',
+                                      requestId: requestId,
+                                      pipeId: pipe['@id'],
+                                      metadata: pipe,
+                                      headers: response.headers, }, loggingMD);
+            return callback(err, null);
+          }
         }
 
-        break;
+        break; // should not get here
       } // bad request
 
       default: {
+        let err = util.format('CREATE-PRIVACY-PIPE-RETURNED-UNKNOWN-STATUS-CODE:%s', response.statusCode);
         serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
                                 action: 'CREATE-PRIVACY-PIPE-FAILED-RETURNED-UNKNOWN-STATUS-CODE',
                                 requestId: requestId,
                                 pipeId: pipe['@id'],
                                 metadata: pipe,
                                 statusCode: response.statusCode,
-                                headers: response.headers, }, loggingMD);
+                                headers: response.headers,
+                                error: err, }, loggingMD);
 
-        assert(false, util.format(
-                'CREATE-PRIVACY-PIPE-RETURNED-UNKNOWN-STATUS-CODE:%s', response.statusCode));
-
-        return callback(null, null); // will not get here
+        return callback(err, null);
       } // default
     } // switch
   }); // post

@@ -58,32 +58,33 @@ describe('Post JWT 2 IS Privacy Pipe Tests', function () {
       });
   }); //it 1.1
 
-  /*it('1.2 should pass back a BAD_REQUEST', function (done) {
+  it('1.2 should post back a bad request as an error', function (done) {
 
-    const pipePathUrl = '/v1/privacy_pipe';
-    const fakePipe = { '@id': 'fake_pipe' };
+    const pipePathUrl = '/v1/any_url';
+    const postURL = API_GATEWAY_URL + pipePathUrl;
+    const fakePipe = { '@id': 'fake_pipe', [PN_P.postDataUrl]: postURL, };
 
     nock(API_GATEWAY_URL)
           .log(console.log)
           .post(pipePathUrl)
           .reply(HttpStatus.BAD_REQUEST, function (uri, requestBody) {
-            // could check that requewst ok, but as only signing not much value
-            console.log(uri);
             assert(requestBody, 'no request body passed');
-            return { '@id': 'fake-bad-request', };
+            return 'do-not-care';
           });
 
-    pipeUtils.promises.createPrivacyPipe(dummyServiceCtx, 'a-request-id',  fakePipe, {})
+    pipeUtils.promises.postJWT2IS(dummyServiceCtx, fakePipe, 'sendJWT', { msgId: 'id-1', msgAction: 'testing', })
       .then(
         function (result) {
-          result.should.have.property('@id', 'fake-bad-request');
-          done();
+          assert(false, util.format('1.2 should be an error:%s', result));
+        },
 
+        function (err) {
+          err.should.be.equal('do-not-care');
+          done();
         }
       )
       .catch(function (err) {
         assert(false, util.format('1.1 Should not have caught an error:%s', err));
-        done();
       });
-  }); //it 1.2*/
+  }); //it 1.2
 }); // describe

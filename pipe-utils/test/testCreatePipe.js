@@ -70,20 +70,22 @@ describe('Create PrivacyPipe Tests', function () {
             // could check that requewst ok, but as only signing not much value
             console.log(uri);
             assert(requestBody, 'no request body passed');
-            return { '@id': 'fake-bad-request', };
+            return { '@id': 'bad-request', };
           });
 
     pipeUtils.promises.createPrivacyPipe(dummyServiceCtx, 'a-request-id',  fakePipe, {})
       .then(
-        function (result) {
-          result.should.have.property('@id', 'fake-bad-request');
-          done();
+        function () {
+          assert(false, 'should be an error');
+        },
 
+        function (err) {
+          err.should.have.property('@id');
+          done();
         }
       )
       .catch(function (err) {
         assert(false, util.format('1.1 Should not have caught an error:%s', err));
-        done();
       });
   }); //it 1.2
 
