@@ -195,12 +195,14 @@ callbacks.createPrivacyPipe = function createPrivacyPipe(serviceCtx, requestId, 
           }
 
           default: {
+            let err = util.format('CREATE-PRIVACY-PIPE-RETURNED-UNKNOWN-BAD-REQUEST-MESSAGE-FORMAT');
             serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
                                       action: 'CREATE-PRIVACY-PIPE-FAILED-RETURNED-BAD-REQUEST-BUT-DO-NOT-RECOGNIZE',
                                       requestId: requestId,
                                       pipeId: pipe['@id'],
                                       metadata: pipe,
-                                      headers: response.headers, }, loggingMD);
+                                      headers: response.headers,
+                                      error: err, }, loggingMD);
             return callback(err, null);
           }
         }
@@ -277,16 +279,45 @@ callbacks.postJWT2IS = function callbackPostJWT2IS(serviceCtx, pipe, sendJWT, pr
         }
 
         case HttpStatus.BAD_REQUEST: {
-          let error = response.body;
-          serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
-                                      action: props.msgAction + '-POST-JWT-2-Pipe-BAD-REQUEST',
-                                      msgId: props.msgId,
-                                      privacyPipe: pipe['@id'],
-                                      headers: response.headers,
-                                      error: error,
-                                      postURL: postURL, }, loggingMD);
+          switch (response.headers['content-type']) {
 
-          return callback(error, null);
+            case 'application/json': {
+              // old format slowly changing to JWT
+              let err = JSON.parse(response.body);
+              serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
+                                        action: props.msgAction + '-POST-JWT-2-Pipe-BAD-REQUEST-OLD-JSON-FORMAT',
+                                        msgId: props.msgId,
+                                        privacyPipe: pipe['@id'],
+                                        error: err, }, loggingMD);
+
+              return callback(err, null);
+            }
+
+            case 'text/plain':  {
+              // jwt
+              let err = JWTUtils.decode(response.body);
+              serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name,
+                                        action: props.msgAction + '-POST-JWT-2-Pipe-BAD-REQUEST',
+                                        msgId: props.msgId,
+                                        privacyPipe: pipe['@id'],
+                                        error: err, }, loggingMD);
+
+              return callback(err, null);
+            }
+
+            default: {
+              let err = response.body;
+              serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
+                                        action: props.msgAction + '-POST-JWT-2-Pipe-BAD-REQUEST-UNKNOWN-ERROR-FORMAT',
+                                        msgId: props.msgId,
+                                        headers: response.headers,
+                                        error: err, }, loggingMD);
+              return callback(err, null);
+            }
+          }
+
+          break; // should not get here
+
         }
 
         case HttpStatus.FORBIDDEN: {
