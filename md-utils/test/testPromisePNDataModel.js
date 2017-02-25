@@ -3,8 +3,8 @@ const HttpStatus = require('http-status');
 const assert = require('assert');
 const JWTUtils = require('jwt-utils/lib/jwtUtils').jwtUtils;
 const nock = require('nock');
-const QueryPrivacyAgent = require('metadata/lib/QueryPrivacyAgent');
-const promisePrivacyAgent = require('../lib/promisePrivacyAgent');
+const PNDataModel = require('metadata/lib/PNDataModel');
+const promisePNDataModel = require('../lib/promisePNDataModel');
 const should = require('should');
 const testUtils = require('node-utils/testing-utils/lib/utils');
 const util = require('util');
@@ -28,26 +28,26 @@ describe('Promise Privacy Agent Tests', function () {
     });
   });
 
-  it('1.1 should post a request to the metadata service and return a structure with a privacy agent', function () {
+  it('1.1 should post a request to the metadata service and return a structure with a datamodel', function () {
 
     //
     // Nock out call to get
-    let pa = createPrivacyAgent();
-    let pathUrl = '/v1/metadata/query_privacy_agent___io___webshield___test--test-qpa-1';
+    let dm = createPNDataModel();
+    let pathUrl = '/v1/metadata/pndatamodel___io___webshield___test--subject_records';
     nock(API_GATEWAY_URL)
           .log(console.log)
           .get(pathUrl)
           .reply(function () { // not used uri, requestBody) {
             return [
               HttpStatus.OK,
-              createMDJWT(pa),
+              createMDJWT(dm),
               { 'content-type': 'text/plain', },
             ];
           });
 
-    return promisePrivacyAgent(dummyServiceCtx, pa['@id'], 'msg-1', 'actionMsg-1')
+    return promisePNDataModel(dummyServiceCtx, dm['@id'], 'msg-1', 'actionMsg-1')
       .then(function (result) {
-        result.should.have.property('pa');
+        result.should.have.property('datamodel');
       },
 
       function (err) {
@@ -66,12 +66,12 @@ describe('Promise Privacy Agent Tests', function () {
   }
 
   // Canon
-  function createPrivacyAgent() {
+  function createPNDataModel() {
     let props =   { hostname: dummyServiceCtx.config.getHostname(),
         domainName: dummyServiceCtx.config.DOMAIN_NAME,
         issuer: 'abc.com', creationTime: '282828', };
 
-    return QueryPrivacyAgent.createTestQPA(props);
+    return PNDataModel.canons.createTestReferenceSourcePNDataModel(props);
   }
 
 }); // describe
