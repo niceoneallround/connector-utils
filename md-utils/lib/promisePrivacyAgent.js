@@ -13,6 +13,9 @@
 const assert = require('assert');
 const MServiceUtils = require('./utils');
 
+// paId - the privacy agent id
+// msgId - the msgId for the log file
+// actionMsg - the action message for log file
 function execute(serviceCtx, paId, msgId, actionMsg) {
   'use strict';
   assert(serviceCtx, 'privacyAgent - serviceCtx param missing');
