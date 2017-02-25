@@ -1,6 +1,6 @@
 {
   "name": "connector-utils",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "Utils used by all connectors and privacy agents",
   "main": "index.js",
   "scripts": {
@@ -36,7 +36,7 @@
   "dependencies": {
     "async": "^2.0.1",
     "data-models": "git://github.com/niceoneallround/data-models.git",
-    "http-status": "^0.2.3",
+    "http-status": "^1.0.1",
     "js-yaml": "^3.6.1",
     "jwt-utils": "git://github.com/niceoneallround/jwt-utils.git",
     "lodash": "^4.17.4",

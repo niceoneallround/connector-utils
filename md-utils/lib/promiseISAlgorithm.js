@@ -22,7 +22,7 @@ function execute(serviceCtx, isaId, msgId, actionMsg) {
 
   const loggingMD = {
           ServiceType: serviceCtx.name,
-          FileName: 'connector-utils/promiseISAlgorithm.js', };
+          FileName: 'connector-utils/ms-utils/promiseISAlgorithm.js', };
 
   let result = {};
 

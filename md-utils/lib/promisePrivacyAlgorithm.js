@@ -31,7 +31,7 @@ function execute(serviceCtx, palgId, msgId, actionMsg) {
 
   const loggingMD = {
           ServiceType: serviceCtx.name,
-          FileName: 'connector-utils/promisePrivacyAlgorithm.js', };
+          FileName: 'connector-utils/md-utils/promisePrivacyAlgorithm.js', };
 
   let result = {};
 

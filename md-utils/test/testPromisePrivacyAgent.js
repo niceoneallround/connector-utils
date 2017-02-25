@@ -28,7 +28,7 @@ describe('Promise Privacy Agent Tests', function () {
     });
   });
 
-  it('1.1 should post a request to the metadata service and return a structure with results', function () {
+  it('1.1 should post a request to the metadata service and return a structure with a privacy agent', function () {
 
     //
     // Nock out call to get the Reference Source
@@ -45,7 +45,7 @@ describe('Promise Privacy Agent Tests', function () {
             ];
           });
 
-    return promisePrivacyAgent.execute(dummyServiceCtx, pa['@id'], 'msg-1', 'actionMsg-1')
+    return promisePrivacyAgent(dummyServiceCtx, pa['@id'], 'msg-1', 'actionMsg-1')
       .then(function (result) {
         result.should.have.property('pa');
       },

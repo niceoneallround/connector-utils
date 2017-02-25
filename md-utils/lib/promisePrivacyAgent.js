@@ -3,7 +3,7 @@
 /*
 
   Fetches and Validate a Privacy Agent if Ok returns a structure
-   { pa: the pa
+   { pa: the pa if all ok
    }
 
   otherwise throws a PN Type Error
@@ -22,7 +22,7 @@ function execute(serviceCtx, paId, msgId, actionMsg) {
 
   const loggingMD = {
           ServiceType: serviceCtx.name,
-          FileName: 'connector-utils/promisePrivacyAgent.js', };
+          FileName: 'connector-utils/md-utils/promisePrivacyAgent.js', };
 
   let result = {};
 
@@ -52,6 +52,4 @@ function execute(serviceCtx, paId, msgId, actionMsg) {
   );
 }
 
-module.exports = {
-  execute: execute,
-};
+module.exports = execute;

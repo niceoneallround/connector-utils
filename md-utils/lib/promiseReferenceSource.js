@@ -22,7 +22,7 @@ function execute(serviceCtx, rsId, msgId, actionMsg) {
 
   const loggingMD = {
           ServiceType: serviceCtx.name,
-          FileName: 'connector-utils/promiseReferenceSource.js', };
+          FileName: 'connector-utils/md-utils/promiseReferenceSource.js', };
 
   let result = {};
 
