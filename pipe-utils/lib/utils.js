@@ -60,17 +60,17 @@ callbacks.createPrivacyPipe = function createPrivacyPipe(serviceCtx, requestId, 
   assert(pipe, 'createPrivacyPipe - no pipe param');
   assert(props, 'createPrivacyPipe - no props param');
 
-  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'Create-PRIVACY-PIPE-using-API-GATEWAY',
-                          requestId: requestId,
-                          pipeId: pipe['@id'],
-                          metadata: pipe,
-                          API_GATEWAY_URL: serviceCtx.config.API_GATEWAY_URL, }, loggingMD);
-
   //
   // The privacy broker expects the request as a signed JWT with a metadata claim
   // containing the pipe information.
   //
   let pipeJWT = JWTUtils.signMetadata(pipe, serviceCtx.config.crypto.jwt, { subject: pipe['@id'] });
+
+  serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'Create-PRIVACY-PIPE-using-API-GATEWAY',
+                          requestId: requestId,
+                          pipeId: pipe['@id'],
+                          metadata: JWTUtils.decode(pipeJWT),
+                          API_GATEWAY_URL: serviceCtx.config.API_GATEWAY_URL, }, loggingMD);
 
   //
   // create the props needed by the low level apigwRequestWrapper, note
