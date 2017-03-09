@@ -15,19 +15,19 @@ const MServiceUtils = require('./utils');
 
 function execute(serviceCtx, keyId, msgId, actionMsg) {
   'use strict';
-  assert(serviceCtx, 'promiseEncryptKeyMd - serviceCtx param missing');
-  assert(keyId, 'promiseEncryptKeyMd - keyId param missing');
-  assert(msgId, 'promiseEncryptKeyMd -  msgId param missing');
-  assert(actionMsg, 'promiseEncryptKeyMd - actionMsg param missing');
+  assert(serviceCtx, 'promiseEKMD - serviceCtx param missing');
+  assert(keyId, 'promiseEKMD - keyId param missing');
+  assert(msgId, 'promiseEKMD -  msgId param missing');
+  assert(actionMsg, 'promiseEKMD - actionMsg param missing');
 
   const loggingMD = {
           ServiceType: serviceCtx.name,
-          FileName: 'connector-utils/ms-utils/promiseEncryptKeyMd.js', };
+          FileName: 'connector-utils/ms-utils/promiseEKMD.js', };
 
   let result = {};
 
   serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: actionMsg + '-Fetching-EncryptKey-Metadata',
-                                    encryptKetMetadataId: keyId,
+                                    encryptKeyMetadataId: keyId,
                                     msgId: msgId, }, loggingMD);
 
   return MServiceUtils.promises.fetchMetadata(serviceCtx, keyId, {})
@@ -35,7 +35,7 @@ function execute(serviceCtx, keyId, msgId, actionMsg) {
     function (keyMD) {
       result.EKMD = keyMD;
       serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: actionMsg + '-Fetched-EncryptKey-Metadata',
-                                          encryptKetMetadataId: keyMD['@id'],
+                                          encryptKeyMetadataId: keyMD['@id'],
                                           msgId: msgId,
                                           metadata: keyMD, }, loggingMD);
       return result;
@@ -45,7 +45,7 @@ function execute(serviceCtx, keyId, msgId, actionMsg) {
       serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
                                           action: actionMsg + '-ERROR-Fetching-EncryptKey-Metadata',
                                           msgId: msgId,
-                                          encryptKetMetadataId: keyId,
+                                          encryptKeyMetadataId: keyId,
                                           error: err, }, loggingMD);
       throw err; // let final catch handle
     }

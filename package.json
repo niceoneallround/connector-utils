@@ -1,6 +1,6 @@
 {
   "name": "connector-utils",
-  "version": "0.6.7",
+  "version": "0.6.8",
   "description": "Utils used by all connectors and privacy agents",
   "main": "index.js",
   "scripts": {
