@@ -1,4 +1,4 @@
-/*jslint node: true, vars: true */
+/*jslint node: true */
 
 /*
 
