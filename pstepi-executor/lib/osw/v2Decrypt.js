@@ -258,7 +258,10 @@ utils.promiseCompactDecryptRequest = function promiseCompactDecryptRequest(servi
       serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
                   action: 'v2Decrypt-ERROR-COMPACTING-ITEMS',
                   msgId: props.msgId,
-                  data: { data2Compact: eRequest, contextUsed: encryptJSONLDContext, },
+                  data: { data2Compact: eRequest,  // note break out all the data so can see it
+                          items: items,
+                          ekmd: eRequest[PN_P.encryptionMetadata],
+                          contextUsed: encryptJSONLDContext, },
                   error: err, }, loggingMD);
       throw err;
     });
