@@ -246,9 +246,9 @@ utils.promiseCompactDecryptRequest = function promiseCompactDecryptRequest(servi
   eRequest[PN_P.items2] = utils.createItems(items, eRequest[PN_P.encryptionMetadata]);
 
   //
-  // Compact the request as easier for parties to deal with
+  // Compact the request as easier for parties to deal with - expand first incase any non expanded fields
   //
-  return JSONLDPromises.compact(eRequest, encryptJSONLDContext)
+  return JSONLDPromises.compact(eRequest, encryptJSONLDContext, { expandContext: encryptJSONLDContext, })
     .then(function (result) {
       return result; // if ok just return
     },
@@ -256,7 +256,7 @@ utils.promiseCompactDecryptRequest = function promiseCompactDecryptRequest(servi
     function (err) {
       // Error processing the compact dump the necessary information
       serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
-                  action: 'v2Decrypt-ERROR-COMPACTING-ITEMS',
+                  action: 'v2Decrypt-ERROR-COMPACTING-Decrypt-Request',
                   msgId: props.msgId,
                   data: { data2Compact: eRequest,  // note break out all the data so can see it
                           items: items,

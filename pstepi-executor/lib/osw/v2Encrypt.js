@@ -238,9 +238,9 @@ model.promiseCompactEncryptRequest = function promiseCompactEncryptRequest(items
   eRequest[PN_P.items2] = model.createItems(items, eRequest[PN_P.encryptionMetadata]);
 
   //
-  // Compact the request as easier for parties to deal with
+  // Compact the request as easier for parties to deal with  expand first incase any non expanded fields
   //
-  return JSONLDPromises.compact(eRequest, encryptJSONLDContext);
+  return JSONLDPromises.compact(eRequest, encryptJSONLDContext, { expandContext: encryptJSONLDContext, });
 };
 
 module.exports = {
