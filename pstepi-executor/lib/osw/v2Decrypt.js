@@ -106,7 +106,7 @@ utils.execute = function execute(serviceCtx, items, props) {
   serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Decrypt-Start',
                                       msgId: props.msgId, }, loggingMD);
 
-  let promiseDecryptResult = model.promiseCompactDecryptRequest(items, props)
+  let promiseDecryptResult = utils.promiseCompactDecryptRequest(serviceCtx, items, props)
     .then(function (compactRequest) {
 
       serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Decrypt-Created-Decrypt-Request',
@@ -138,16 +138,6 @@ utils.execute = function execute(serviceCtx, items, props) {
       serviceCtx.logger.logProgress(util.format('POST DecryptRequest to Obfuscation Service:%s', postProps.url));
 
       return requestWrapperPromises.postJSON(postProps);
-    },
-
-    function (err) {
-      // Error processin the compact dump the necessary information
-      serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
-                  action: 'v2Decrypt-ERROR-COMPACTING-ITEMS',
-                  msgId: props.msgId,
-                  data: items,
-                  error: err, }, loggingMD);
-      throw err;
     });
 
   // process the result from the obfuscation service
@@ -192,8 +182,6 @@ utils.execute = function execute(serviceCtx, items, props) {
 // Utils
 //----------------------
 
-let model = {};
-
 //
 // create eitems that are sent to the service
 //
@@ -208,7 +196,7 @@ let model = {};
 //
 // { ‘id’ : ‘an id', ‘type’: ‘http://.../md-1’, ‘v’ : base64(bytes[]) , n: base64(bytes[], aad: base64(bytes[]},
 //
-model.createItems = function createItems(items, encryptMetadata) {
+utils.createItems = function createItems(items, encryptMetadata) {
   'use strict';
 
   let result = [];
@@ -237,8 +225,11 @@ model.createItems = function createItems(items, encryptMetadata) {
   return result;
 };
 
-model.promiseCompactDecryptRequest = function promiseCompactDecryptRequest(items, props) {
+utils.promiseCompactDecryptRequest = function promiseCompactDecryptRequest(serviceCtx, items, props) {
   'use strict';
+  assert(serviceCtx, 'promiseCompactDecryptRequest serviceCtx param missing');
+  assert(items, 'promiseCompactDecryptRequest items param missing');
+  assert(props, 'promiseCompactDecryptRequest props param missing');
 
   let eRequest = JSONLDUtils.createBlankNode({ '@type': PN_T.DecryptRequest, });
 
@@ -252,15 +243,28 @@ model.promiseCompactDecryptRequest = function promiseCompactDecryptRequest(items
   // Create the external item information from the passed in items and set
   // type to the newley created encrypt metadata. Reuse the id so can link back
   //
-  eRequest[PN_P.items2] = model.createItems(items, eRequest[PN_P.encryptionMetadata]);
+  eRequest[PN_P.items2] = utils.createItems(items, eRequest[PN_P.encryptionMetadata]);
 
   //
   // Compact the request as easier for parties to deal with
   //
-  return JSONLDPromises.compact(eRequest, encryptJSONLDContext);
+  return JSONLDPromises.compact(eRequest, encryptJSONLDContext)
+    .then(function (result) {
+      return result; // if ok just return
+    },
+
+    function (err) {
+      // Error processing the compact dump the necessary information
+      serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
+                  action: 'v2Decrypt-ERROR-COMPACTING-ITEMS',
+                  msgId: props.msgId,
+                  data: { data2Compact: eRequest, contextUsed: encryptJSONLDContext, },
+                  error: err, }, loggingMD);
+      throw err;
+    });
 };
 
 module.exports = {
   execute: utils.execute,
-  model: model, // expose so can test
+  utils: utils, // expose so can test
 };

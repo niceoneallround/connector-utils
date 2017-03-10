@@ -49,7 +49,7 @@ describe('v2Decrypt - tests', function () {
   describe('1 validate create compact request', function () {
 
     it('1.1 should return a promise that contains the compacted request', function () {
-      return v2Decrypt.model.promiseCompactDecryptRequest(items, props)
+      return v2Decrypt.utils.promiseCompactDecryptRequest(dummyServiceCtx, items, props)
         .then(function (result) {
           //console.log('*******', result);
           result.should.have.property('@context');
