@@ -138,6 +138,16 @@ utils.execute = function execute(serviceCtx, items, props) {
       serviceCtx.logger.logProgress(util.format('POST DecryptRequest to Obfuscation Service:%s', postProps.url));
 
       return requestWrapperPromises.postJSON(postProps);
+    },
+
+    function (err) {
+      // Error processin the compact dump the necessary information
+      serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
+                  action: 'v2Decrypt-ERROR-COMPACTING-ITEMS',
+                  msgId: props.msgId,
+                  data: items,
+                  error: err, }, loggingMD);
+      throw err;
     });
 
   // process the result from the obfuscation service
