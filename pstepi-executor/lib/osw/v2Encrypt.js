@@ -108,7 +108,7 @@ utils.execute = function execute(serviceCtx, items, props) {
   serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Encrypt-Start',
                                       msgId: props.msgId, }, loggingMD);
 
-  let promiseEncryptResult = model.promiseCompactEncryptRequest(items, props)
+  let promiseEncryptResult = model.promiseCompactEncryptRequest(serviceCtx, items, props)
     .then(function (compactRequest) {
 
       serviceCtx.logger.logJSON('info', { serviceType: serviceCtx.name, action: 'v2Encrypt-Created-Encrypt-Request',
@@ -220,8 +220,11 @@ model.createItems = function createItems(items, encryptMetadata) {
   return result;
 };
 
-model.promiseCompactEncryptRequest = function promiseCompactEncryptRequest(items, props) {
+model.promiseCompactEncryptRequest = function promiseCompactEncryptRequest(serviceCtx, items, props) {
   'use strict';
+  assert(serviceCtx, 'promiseCompactEncryptRequest serviceCtx param missing');
+  assert(items, 'promiseCompactEncryptRequest items param missing');
+  assert(props, 'promiseCompactEncryptRequest props param missing');
 
   let eRequest = JSONLDUtils.createBlankNode({ '@type': PN_T.EncryptRequest, });
 
@@ -240,7 +243,21 @@ model.promiseCompactEncryptRequest = function promiseCompactEncryptRequest(items
   //
   // Compact the request as easier for parties to deal with  expand first incase any non expanded fields
   //
-  return JSONLDPromises.compact(eRequest, encryptJSONLDContext, { expandContext: encryptJSONLDContext, });
+  return JSONLDPromises.compact(eRequest, encryptJSONLDContext, { expandContext: encryptJSONLDContext, })
+    .then(function (result) {
+      return result; // if ok just return
+    },
+
+    function (err) {
+      // Error processing the compact dump the necessary information
+      serviceCtx.logger.logJSON('error', { serviceType: serviceCtx.name,
+                  action: 'v2Decrypt-ERROR-COMPACTING-V2Encrypt-Request',
+                  msgId: props.msgId,
+                  data: { data2Compact: eRequest,  // note break out all the data so can see it
+                          contextUsed: encryptJSONLDContext, },
+                  error: err, }, loggingMD);
+      throw err;
+    });
 };
 
 module.exports = {

@@ -47,7 +47,7 @@ describe('v2Encrypt - tests', function () {
   describe('1 validate create compact request', function () {
 
     it('1.1 should return a promise that contains the compacted request', function () {
-      return v2Encrypt.model.promiseCompactEncryptRequest(items, props)
+      return v2Encrypt.model.promiseCompactEncryptRequest(dummyServiceCtx, items, props)
         .then(function (result) {
           console.log('*******', result);
           result.should.have.property('@context');
