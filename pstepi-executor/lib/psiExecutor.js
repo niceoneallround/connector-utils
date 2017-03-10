@@ -54,6 +54,8 @@ class PSIExecutor {
     assert(props.msgId, 'pstepi-execute: props.msgId missing');
     assert(props.psi, util.format('pstepi-execute: props.psi param is missing:%j', props));
     assert(props.graph, util.format('pstepi-execute: props.graph param is missing:%j', props));
+    assert(props.os, util.format('pstepi-execute - props.os param missing:%j', props)); // if no obfuscation service
+    assert(props.cekmd, util.format('pstepi-execute - props.cekmd param missing:%j', props)); // if no encrypt key
 
     assert((props.psi[PN_P.privacyActionInstance].length === 1),
             util.format('pstepi-execute: Can only provision a single privacy action:%j', props.psi));

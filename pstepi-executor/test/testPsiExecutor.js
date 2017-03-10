@@ -43,7 +43,7 @@ describe('PSI Test Privacy Step Instance Executor', function () {
 
       let psiE = psiExecutor.create({ paiExecutor: fakePAIExecutor, });
 
-      return psiE.execute(serviceCtx, { msgId: 'msgId', psi: psi, graph: 'fake-data', })
+      return psiE.execute(serviceCtx, { msgId: 'msgId', psi: psi, graph: 'fake-data', os: 'fake-os', cekmd: 'fake-cekmd', })
         .then(function (result) {
           result['@graph'].length.should.be.equal(2);
         });
